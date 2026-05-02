@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcours — 概要</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root {
+  --canvas:      oklch(98.5% 0.003 255);
+  --surface:     oklch(95%   0.004 255);
+  --surface-hi:  oklch(91%   0.005 255);
+  --accent:      oklch(35%   0.13  255);
+  --accent-soft: oklch(35%   0.13  255 / 0.08);
+  --text-1:      oklch(10%   0.006 255);
+  --text-2:      oklch(40%   0.008 255);
+  --text-3:      oklch(64%   0.005 255);
+  --border-1:    oklch(0%    0     0   / 0.09);
+  --border-2:    oklch(0%    0     0   / 0.15);
+  --s-applied:   oklch(38% 0.10 245);
+  --s-phone:     oklch(36% 0.13 218);
+  --s-tech:      oklch(35% 0.13 255);
+  --s-onsite:    oklch(40% 0.13 48);
+  --s-offer:     oklch(36% 0.14 148);
+  --s-rejected:  oklch(36% 0.11 22);
+  --s-withdrawn: oklch(50% 0.004 255);
+  --r-sm:3px; --r-md:5px; --r-lg:8px; --r-pill:100px;
+  font-family:'Noto Sans JP',system-ui,sans-serif;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+html,body{height:100%;background:var(--canvas);color:var(--text-1);overflow:hidden}
+.app{display:grid;grid-template-columns:220px 1fr;height:100vh;overflow:hidden}
+
+.sidebar{background:var(--canvas);border-right:1px solid var(--border-1);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-logo{padding:22px 18px 16px;border-bottom:1px solid var(--border-1)}
+.logo-name{font-family:'Shippori Mincho',Georgia,serif;font-size:18px;font-weight:700;color:var(--text-1);letter-spacing:.01em}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);margin-top:4px;letter-spacing:.04em}
+.sidebar-nav{padding:10px 8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 8px;border-radius:var(--r-md);color:var(--text-3);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;border:none;background:none;width:100%;text-align:left;position:relative;transition:color 100ms ease,transform 80ms ease;touch-action:manipulation}
+@media(hover:hover){.nav-item:hover{color:var(--text-1)}}
+.nav-item:active{transform:scale(.98)}
+.nav-item.active{color:var(--accent)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:1.5px;background:var(--accent);border-radius:2px}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.45}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3)}
+.nav-item.active .nav-badge{color:var(--accent)}
+.sidebar-upcoming{flex:1;padding:14px 16px;border-top:1px solid var(--border-1);overflow:hidden;min-height:0}
+.upcoming-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.up-item{padding:8px 10px;border-radius:var(--r-md);border:1px solid var(--border-1);margin-bottom:7px}
+.up-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);display:block;margin-bottom:2px}
+.up-company{font-size:13px;font-weight:600;color:var(--text-1);display:block}
+.up-type{font-size:12px;color:var(--text-3);margin-top:1px;display:block}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border-1);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.avatar{width:27px;height:27px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.footer-name{font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-2)}
+.footer-settings{background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;border-radius:var(--r-sm);line-height:0;transition:color 100ms ease}
+@media(hover:hover){.footer-settings:hover{color:var(--text-1)}}
+
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;padding:0 28px;height:54px;border-bottom:1px solid var(--border-1);gap:12px;flex-shrink:0}
+.page-title{font-family:'Shippori Mincho',Georgia,serif;font-size:16px;font-weight:400;flex:1;letter-spacing:.01em}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:background-color 100ms ease,transform 80ms ease;touch-action:manipulation;line-height:1}
+.btn:active{transform:scale(.96)}
+.btn-ghost{background:none;color:var(--text-2);border:1px solid var(--border-2)}
+@media(hover:hover){.btn-ghost:hover{background:var(--surface);color:var(--text-1)}}
+
+.stat-tiles{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border-1);flex-shrink:0}
+.tile{padding:18px 28px;border-right:1px solid var(--border-1)}
+.tile:last-child{border-right:none}
+.tile-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:400;letter-spacing:-.03em;color:var(--text-1);line-height:1;font-variant-numeric:tabular-nums}
+.tile-num.hi{color:var(--accent)}
+.tile-label{font-size:12.5px;font-weight:500;color:var(--text-3);margin-top:5px}
+.tile-sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-3);margin-top:4px}
+
+.dash-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+
+.panel-left{border-right:1px solid var(--border-1);display:flex;flex-direction:column;overflow:hidden}
+.panel-head{padding:18px 28px 14px;border-bottom:1px solid var(--border-1);flex-shrink:0}
+.panel-title{font-family:'Shippori Mincho',Georgia,serif;font-size:16px;font-weight:400;letter-spacing:.01em}
+.panel-sub{font-size:12.5px;color:var(--text-3);margin-top:3px}
+.panel-body{flex:1;overflow-y:auto;padding:20px 28px;scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+
+.funnel-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.funnel-label{font-size:13px;font-weight:500;color:var(--text-2);width:88px;flex-shrink:0}
+.funnel-bar-wrap{flex:1;height:20px;background:var(--surface);border-radius:var(--r-sm);overflow:hidden}
+.funnel-bar{height:100%;border-radius:var(--r-sm);transition:width 600ms cubic-bezier(0.16,1,0.3,1)}
+.funnel-count{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--text-3);width:20px;text-align:right;flex-shrink:0}
+.funnel-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3);width:36px;text-align:right;flex-shrink:0}
+
+.section-divider{display:flex;align-items:center;gap:10px;margin:22px 0 14px}
+.divider-line{flex:1;height:1px;background:var(--border-1)}
+.divider-label{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+
+.rate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rate-item{background:var(--surface);border-radius:var(--r-md);padding:14px 16px}
+.rate-num{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:400;color:var(--text-1);letter-spacing:-.02em}
+.rate-num.hi{color:var(--accent)}
+.rate-label{font-size:12px;color:var(--text-3);margin-top:4px}
+
+.panel-right{display:flex;flex-direction:column;overflow:hidden}
+.feed{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+.feed-item{display:flex;align-items:flex-start;gap:0;padding:14px 28px;border-bottom:1px solid var(--border-1);position:relative;transition:background-color 80ms ease}
+@media(hover:hover){.feed-item:hover{background:var(--surface)}}
+.feed-item::before{content:'';position:absolute;left:40px;top:0;bottom:0;width:1px;background:var(--border-1)}
+.feed-item:first-child::before{top:28px}
+.feed-item:last-child::before{bottom:auto;height:14px}
+.feed-dot-wrap{width:28px;flex-shrink:0;display:flex;justify-content:center;padding-top:4px;z-index:1;position:relative}
+.feed-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--canvas);flex-shrink:0}
+.feed-dot.applied{background:var(--s-applied)}
+.feed-dot.interview{background:var(--accent)}
+.feed-dot.offer{background:var(--s-offer)}
+.feed-dot.rejected{background:var(--s-rejected)}
+.feed-dot.withdrawn{background:var(--s-withdrawn)}
+.feed-content{flex:1;min-width:0;padding-left:12px}
+.feed-action{font-size:14px;font-weight:500;line-height:1.5;color:var(--text-1)}
+.feed-action span{color:var(--text-2);font-weight:400}
+.feed-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">Parcours</div>
+      <div class="logo-sub">歩み · 転職の軌跡を残す</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        概要
+      </button>
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="10" rx="1.5"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M5 9h6M5 12h4"/></svg>
+        応募管理
+        <span class="nav-badge">8</span>
+      </button>
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M5 6h6M5 9h6M5 12h3"/></svg>
+        質問集
+        <span class="nav-badge">12</span>
+      </button>
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="12" rx="1.5"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>
+        面接日程
+        <span class="nav-badge">2</span>
+      </button>
+    </nav>
+    <div class="sidebar-upcoming">
+      <div class="upcoming-label">直近の面接</div>
+      <div class="up-item">
+        <span class="up-date">5月5日</span>
+        <span class="up-company">Anthropic</span>
+        <span class="up-type">技術面接</span>
+      </div>
+      <div class="up-item">
+        <span class="up-date">5月6日</span>
+        <span class="up-company">Vercel</span>
+        <span class="up-type">人事面接</span>
+      </div>
+      <div class="up-item">
+        <span class="up-date">5月8日</span>
+        <span class="up-company">Stripe</span>
+        <span class="up-type">最終面接</span>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="avatar">名</div>
+      <span class="footer-name">あなたの名前</span>
+      <button class="footer-settings" aria-label="設定">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <span class="page-title">概要</span>
+      <button class="btn btn-ghost">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M8 3v10"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+        エクスポート
+      </button>
+    </header>
+
+    <div class="stat-tiles">
+      <div class="tile">
+        <div class="tile-num">24</div>
+        <div class="tile-label">応募総数</div>
+        <div class="tile-sub">3月20日から</div>
+      </div>
+      <div class="tile">
+        <div class="tile-num hi">6</div>
+        <div class="tile-label">選考中</div>
+        <div class="tile-sub">パイプライン内</div>
+      </div>
+      <div class="tile">
+        <div class="tile-num" style="color:var(--s-offer)">1</div>
+        <div class="tile-label">内定数</div>
+        <div class="tile-sub">内定率 4.2%</div>
+      </div>
+      <div class="tile">
+        <div class="tile-num">18日</div>
+        <div class="tile-label">平均内定日数</div>
+        <div class="tile-sub">Linear: 19日</div>
+      </div>
+    </div>
+
+    <div class="dash-body">
+      <div class="panel-left">
+        <div class="panel-head">
+          <div class="panel-title">パイプラインファネル</div>
+          <div class="panel-sub">各フェーズの通過率</div>
+        </div>
+        <div class="panel-body">
+          <div id="funnel"></div>
+          <div class="section-divider">
+            <div class="divider-line"></div>
+            <span class="divider-label">各種率</span>
+            <div class="divider-line"></div>
+          </div>
+          <div class="rate-grid">
+            <div class="rate-item">
+              <div class="rate-num">25%</div>
+              <div class="rate-label">返答率</div>
+            </div>
+            <div class="rate-item">
+              <div class="rate-num hi">50%</div>
+              <div class="rate-label">書類通過率</div>
+            </div>
+            <div class="rate-item">
+              <div class="rate-num">67%</div>
+              <div class="rate-label">技術面接通過率</div>
+            </div>
+            <div class="rate-item">
+              <div class="rate-num" style="color:var(--s-offer)">100%</div>
+              <div class="rate-label">内定→承諾率</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-right">
+        <div class="panel-head">
+          <div class="panel-title">アクティビティ</div>
+          <div class="panel-sub">最近のイベント（新しい順）</div>
+        </div>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const FUNNEL=[
+  {label:"応募済",   count:24, max:24, color:"oklch(38% 0.10 245)"},
+  {label:"書類選考", count:8,  max:24, color:"oklch(36% 0.13 218)"},
+  {label:"技術面接", count:4,  max:24, color:"oklch(35% 0.13 255)"},
+  {label:"最終面接", count:2,  max:24, color:"oklch(40% 0.13 48)"},
+  {label:"内定",     count:1,  max:24, color:"oklch(36% 0.14 148)"},
+  {label:"承諾",     count:0,  max:24, color:"oklch(40% 0.08 145)"},
+];
+
+const EVENTS=[
+  {type:"applied",   date:"5月1日",   text:"<span>Raycast</span>に応募",              role:"Software Engineer"},
+  {type:"applied",   date:"4月30日",  text:"<span>Notion</span>に応募",               role:"Full Stack Engineer"},
+  {type:"interview", date:"4月29日",  text:"<span>Stripe</span>のシステム設計面接",   role:"完了"},
+  {type:"applied",   date:"4月28日",  text:"<span>Anthropic</span>に応募",            role:"Software Engineer"},
+  {type:"interview", date:"4月27日",  text:"<span>Stripe</span>技術面接 (1)",         role:"完了"},
+  {type:"applied",   date:"4月25日",  text:"<span>Vercel</span>に応募",               role:"Frontend Engineer"},
+  {type:"interview", date:"4月22日",  text:"<span>Linear</span>の技術面接",           role:"通過"},
+  {type:"interview", date:"4月20日",  text:"<span>Stripe</span>の人事面接",           role:"完了"},
+  {type:"offer",     date:"4月29日",  text:"<span>Linear</span>から内定",             role:"$170–220k · Product Engineer"},
+  {type:"interview", date:"4月15日",  text:"<span>Figma</span>の技術面接",            role:"完了"},
+  {type:"applied",   date:"4月15日",  text:"<span>Stripe</span>に応募",               role:"Backend Engineer"},
+  {type:"interview", date:"4月8日",   text:"<span>Figma</span>の人事面接",            role:"完了"},
+  {type:"rejected",  date:"4月16日",  text:"<span>Figma</span>から不採用通知",        role:"技術面接後"},
+  {type:"applied",   date:"4月10日",  text:"<span>Linear</span>に応募",               role:"Product Engineer"},
+  {type:"applied",   date:"4月1日",   text:"<span>Figma</span>に応募",                role:"Software Engineer"},
+  {type:"withdrawn", date:"3月25日",  text:"<span>PlanetScale</span>を辞退",          role:"Infrastructure Engineer"},
+  {type:"applied",   date:"3月20日",  text:"<span>PlanetScale</span>に応募",          role:"Infrastructure Engineer"},
+];
+
+function renderFunnel(){
+  document.getElementById("funnel").innerHTML=FUNNEL.map(f=>`
+    <div class="funnel-row">
+      <span class="funnel-label">${f.label}</span>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:0%;background:${f.color};opacity:0.75" data-w="${Math.round(f.count/f.max*100)}"></div>
+      </div>
+      <span class="funnel-count">${f.count}</span>
+      <span class="funnel-pct">${f.max>0?Math.round(f.count/f.max*100):0}%</span>
+    </div>`).join('');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.funnel-bar').forEach(b=>b.style.width=b.dataset.w+'%');
+  }));
+}
+
+function renderFeed(){
+  document.getElementById("feed").innerHTML=EVENTS.map(e=>`
+    <div class="feed-item">
+      <div class="feed-dot-wrap"><div class="feed-dot ${e.type}"></div></div>
+      <div class="feed-content">
+        <div class="feed-action">${e.text} · <span>${e.role}</span></div>
+        <div class="feed-time">${e.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+function setPage(el){document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));el.classList.add("active")}
+
+renderFunnel();
+renderFeed();
+</script>
+</body>
+</html>

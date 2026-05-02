@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcours — ボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root {
+  --canvas:      oklch(98.5% 0.003 255);
+  --sidebar:     oklch(98.5% 0.003 255);
+  --surface:     oklch(95%   0.004 255);
+  --surface-hi:  oklch(91%   0.005 255);
+  --accent:      oklch(35%   0.13  255);
+  --accent-soft: oklch(35%   0.13  255 / 0.08);
+  --text-1:      oklch(10%   0.006 255);
+  --text-2:      oklch(40%   0.008 255);
+  --text-3:      oklch(64%   0.005 255);
+  --border-1:    oklch(0%    0     0   / 0.09);
+  --border-2:    oklch(0%    0     0   / 0.15);
+  --s-applied:   oklch(38% 0.10 245);
+  --s-phone:     oklch(36% 0.13 218);
+  --s-tech:      oklch(35% 0.13 255);
+  --s-onsite:    oklch(40% 0.13 48);
+  --s-offer:     oklch(36% 0.14 148);
+  --s-rejected:  oklch(36% 0.11 22);
+  --s-withdrawn: oklch(50% 0.004 255);
+  --r-sm:3px; --r-md:5px; --r-lg:8px; --r-pill:100px;
+  font-family:'Noto Sans JP',system-ui,sans-serif;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+html,body{height:100%;background:var(--canvas);color:var(--text-1);overflow:hidden}
+.app{display:grid;grid-template-columns:220px 1fr;height:100vh;overflow:hidden}
+
+.sidebar{background:var(--sidebar);border-right:1px solid var(--border-1);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-logo{padding:22px 18px 16px;border-bottom:1px solid var(--border-1)}
+.logo-name{font-family:'Shippori Mincho',Georgia,serif;font-size:18px;font-weight:700;color:var(--text-1);letter-spacing:.01em}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);margin-top:4px;letter-spacing:.04em}
+.sidebar-nav{padding:10px 8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 8px;border-radius:var(--r-md);color:var(--text-3);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;border:none;background:none;width:100%;text-align:left;position:relative;transition:color 100ms ease,transform 80ms ease;touch-action:manipulation}
+@media(hover:hover){.nav-item:hover{color:var(--text-1)}}
+.nav-item:active{transform:scale(.98)}
+.nav-item.active{color:var(--accent)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:1.5px;background:var(--accent);border-radius:2px}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.45}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3)}
+.nav-item.active .nav-badge{color:var(--accent)}
+.sidebar-upcoming{flex:1;padding:14px 16px;border-top:1px solid var(--border-1);overflow:hidden;min-height:0}
+.upcoming-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.up-item{padding:8px 10px;border-radius:var(--r-md);border:1px solid var(--border-1);margin-bottom:7px}
+.up-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);display:block;margin-bottom:2px}
+.up-company{font-size:13px;font-weight:600;color:var(--text-1);display:block}
+.up-type{font-size:12px;color:var(--text-3);margin-top:1px;display:block}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border-1);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.avatar{width:27px;height:27px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.footer-name{font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-2)}
+.footer-settings{background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;border-radius:var(--r-sm);line-height:0;transition:color 100ms ease}
+@media(hover:hover){.footer-settings:hover{color:var(--text-1)}}
+
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;padding:0 24px;height:54px;border-bottom:1px solid var(--border-1);gap:12px;flex-shrink:0}
+.page-title{font-family:'Shippori Mincho',Georgia,serif;font-size:16px;font-weight:400;flex:1;letter-spacing:.01em}
+.topbar-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3);display:flex;gap:16px}
+.topbar-stat{display:flex;gap:5px;align-items:center}
+.topbar-stat-n{color:var(--text-1);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:background-color 100ms ease,transform 80ms ease;touch-action:manipulation;line-height:1}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--accent);color:oklch(98% 0.002 255)}
+@media(hover:hover){.btn-primary:hover{background:oklch(38% 0.13 255)}}
+.btn-ghost{background:none;color:var(--text-2);border:1px solid var(--border-2)}
+@media(hover:hover){.btn-ghost:hover{background:var(--surface);color:var(--text-1)}}
+
+.board-canvas{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 24px;gap:12px;align-items:flex-start;scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+::-webkit-scrollbar{height:4px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
+
+.col{flex:0 0 210px;display:flex;flex-direction:column;max-height:100%}
+.col-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px;margin-bottom:10px}
+.col-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3)}
+.col-count{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:1px 6px;border-radius:var(--r-pill);border:1px solid var(--border-1);color:var(--text-3)}
+.col-body{overflow-y:auto;flex:1;scrollbar-width:none;padding-right:2px}
+.col-body::-webkit-scrollbar{display:none}
+
+.k-card{background:oklch(100% 0 0);border:1px solid var(--border-1);border-radius:var(--r-lg);padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color 100ms ease,box-shadow 100ms ease,transform 80ms ease;touch-action:manipulation}
+@media(hover:hover){.k-card:hover{border-color:var(--border-2);box-shadow:0 2px 8px oklch(0% 0 0 / 0.07)}}
+.k-card:active{transform:scale(.98)}
+.k-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.k-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.k-abbr{width:28px;height:28px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--text-3);flex-shrink:0}
+.k-date{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-3)}
+.k-company{font-size:14px;font-weight:700;line-height:1.2;margin-bottom:3px}
+.k-role{font-size:13px;color:var(--text-2);line-height:1.4}
+.k-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:9px;border-top:1px solid var(--border-1)}
+.k-salary{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3)}
+.int-dots{display:flex;gap:3px}
+.int-dot{width:6px;height:6px;border-radius:50%;background:var(--border-2)}
+.int-dot.done{background:var(--s-offer)}
+.int-dot.upcoming{background:var(--accent)}
+
+.col.col-applied .col-count{color:var(--s-applied);border-color:oklch(38% 0.10 245/0.2);background:oklch(38% 0.10 245/0.06)}
+.col.col-phone .col-count{color:var(--s-phone);border-color:oklch(36% 0.13 218/0.2);background:oklch(36% 0.13 218/0.06)}
+.col.col-technical .col-count{color:var(--s-tech);border-color:oklch(35% 0.13 255/0.2);background:oklch(35% 0.13 255/0.06)}
+.col.col-onsite .col-count{color:var(--s-onsite);border-color:oklch(40% 0.13 48/0.2);background:oklch(40% 0.13 48/0.06)}
+.col.col-offer .col-count{color:var(--s-offer);border-color:oklch(36% 0.14 148/0.2);background:oklch(36% 0.14 148/0.06)}
+.col.col-closed .col-count{color:var(--text-3);border-color:var(--border-1)}
+
+.overlay{position:fixed;inset:0;background:oklch(10% 0.005 255 / 0.35);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 180ms ease}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{width:480px;max-height:82vh;background:var(--canvas);border-radius:var(--r-lg);border:1px solid var(--border-1);box-shadow:0 8px 40px oklch(10% 0.005 255 / 0.12);display:flex;flex-direction:column;overflow:hidden;transform:scale(.96) translateY(10px);transition:transform 220ms cubic-bezier(0.16,1,0.3,1)}
+.overlay.open .modal{transform:scale(1) translateY(0)}
+.m-header{display:flex;align-items:flex-start;gap:14px;padding:20px 20px 16px;border-bottom:1px solid var(--border-1);flex-shrink:0}
+.m-icon{width:40px;height:40px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-3);flex-shrink:0}
+.m-company{font-family:'Shippori Mincho',Georgia,serif;font-size:18px;font-weight:400;line-height:1.2}
+.m-role{font-size:14px;color:var(--text-2);margin-top:3px}
+.m-close{margin-left:auto;background:none;border:none;color:var(--text-3);cursor:pointer;padding:5px;border-radius:var(--r-sm);line-height:0;transition:color 100ms ease;flex-shrink:0}
+@media(hover:hover){.m-close:hover{color:var(--text-1)}}
+.m-body{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
+.m-section{padding:16px 20px;border-bottom:1px solid var(--border-1)}
+.m-section:last-child{border-bottom:none}
+.m-section-title{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.meta-item{display:flex;flex-direction:column;gap:3px}
+.meta-key{font-size:12px;color:var(--text-3)}
+.meta-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-1)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--r-pill);font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:500;white-space:nowrap}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.b-applied  {background:oklch(38% 0.10 245/0.08);color:var(--s-applied)}  .b-applied   .badge-dot{background:var(--s-applied)}
+.b-phone    {background:oklch(36% 0.13 218/0.08);color:var(--s-phone)}    .b-phone     .badge-dot{background:var(--s-phone)}
+.b-technical{background:oklch(35% 0.13 255/0.08);color:var(--s-tech)}     .b-technical .badge-dot{background:var(--s-tech)}
+.b-onsite   {background:oklch(40% 0.13 48 /0.08);color:var(--s-onsite)}   .b-onsite    .badge-dot{background:var(--s-onsite)}
+.b-offer    {background:oklch(36% 0.14 148/0.08);color:var(--s-offer)}    .b-offer     .badge-dot{background:var(--s-offer)}
+.b-rejected {background:oklch(36% 0.11 22 /0.07);color:var(--s-rejected)} .b-rejected  .badge-dot{background:var(--s-rejected)}
+.b-withdrawn{background:oklch(50% 0.004 255/0.10);color:var(--s-withdrawn)}.b-withdrawn .badge-dot{background:var(--s-withdrawn)}
+.tl-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0}
+.tl-dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.tl-dot.done{background:var(--s-offer)}
+.tl-dot.upcoming{background:var(--accent)}
+.tl-type{font-size:14px;font-weight:500}
+.tl-date{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-3);margin-top:2px}
+.q-item{padding:9px 0;border-bottom:1px solid var(--border-1)}
+.q-item:last-child{border-bottom:none}
+.q-text{font-size:14px;line-height:1.7}
+.q-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:2px 6px;border-radius:var(--r-pill);color:var(--text-3);border:1px solid var(--border-1)}
+@media(prefers-reduced-motion:reduce){.overlay,.modal{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">Parcours</div>
+      <div class="logo-sub">歩み · 転職の軌跡を残す</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        概要
+      </button>
+      <button class="nav-item active" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h3v8H1zM6 4h3v5H6zM11 4h4v11h-4zM1 15h3M6 12h3"/></svg>
+        応募管理
+        <span class="nav-badge">8</span>
+      </button>
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M5 6h6M5 9h6M5 12h3"/></svg>
+        質問集
+        <span class="nav-badge">12</span>
+      </button>
+      <button class="nav-item" onclick="setPage(this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="12" rx="1.5"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>
+        面接日程
+        <span class="nav-badge">2</span>
+      </button>
+    </nav>
+    <div class="sidebar-upcoming">
+      <div class="upcoming-label">直近の面接</div>
+      <div class="up-item">
+        <span class="up-date">5月5日</span>
+        <span class="up-company">Anthropic</span>
+        <span class="up-type">技術面接</span>
+      </div>
+      <div class="up-item">
+        <span class="up-date">5月6日</span>
+        <span class="up-company">Vercel</span>
+        <span class="up-type">人事面接</span>
+      </div>
+      <div class="up-item">
+        <span class="up-date">5月8日</span>
+        <span class="up-company">Stripe</span>
+        <span class="up-type">最終面接</span>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="avatar">名</div>
+      <span class="footer-name">あなたの名前</span>
+      <button class="footer-settings" aria-label="設定">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <span class="page-title">ボード</span>
+      <div class="topbar-meta">
+        <span class="topbar-stat"><span class="topbar-stat-n">6</span> 選考中</span>
+        <span class="topbar-stat"><span class="topbar-stat-n" style="color:var(--s-offer)">1</span> 内定</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost">絞り込み</button>
+        <button class="btn btn-primary">
+          <svg width="10" height="10" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 1v10M1 6h10"/></svg>
+          応募を追加
+        </button>
+      </div>
+    </header>
+    <div class="board-canvas" id="board"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="m-header">
+      <div class="m-icon" id="m-icon"></div>
+      <div style="flex:1;min-width:0">
+        <div class="m-company" id="m-company"></div>
+        <div class="m-role" id="m-role"></div>
+      </div>
+      <button class="m-close" onclick="closeModal()" aria-label="閉じる">
+        <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.8" fill="none"><path d="M1 1l12 12M13 1L1 13"/></svg>
+      </button>
+    </div>
+    <div class="m-body" id="m-body"></div>
+  </div>
+</div>
+
+<script>
+const DATA=[{id:1,company:"Anthropic",abbr:"AN",role:"Software Engineer",status:"TECHNICAL",applied:"4月28日",salary:"$180–240k",stage:"テイクホーム課題中",interviews:[{type:"人事面接",date:"5月2日",s:"done"},{type:"技術面接",date:"5月5日",s:"upcoming"}],questions:[{text:"1M req/sに耐える分散型レートリミッターを設計せよ",tags:["システム設計","分散"]},{text:"バックプレッシャー付きの並行タスクキューをGoで実装せよ",tags:["並行処理","go"]}]},{id:2,company:"Vercel",abbr:"VC",role:"Frontend Engineer",status:"PHONE",applied:"4月25日",salary:"$160–200k",stage:"人事面接予定",interviews:[{type:"人事面接",date:"5月6日",s:"upcoming"}],questions:[]},{id:3,company:"Linear",abbr:"LN",role:"Product Engineer",status:"OFFER",applied:"4月10日",salary:"$170–220k",stage:"内定通知受領",interviews:[{type:"人事面接",date:"4月15日",s:"done"},{type:"技術面接",date:"4月22日",s:"done"},{type:"システム設計",date:"4月29日",s:"done"}],questions:[{text:"オフライン対応のためのLinear同期エンジンをどう設計するか？",tags:["システム設計","同期"]},{text:"本番環境で発生した複雑なバグのデバッグ体験を話してください",tags:["行動面接"]},{text:"Reactで10万件のアイテムを持つ仮想リストを実装せよ",tags:["react","パフォーマンス"]}]},{id:4,company:"Stripe",abbr:"ST",role:"Backend Engineer",status:"ONSITE",applied:"4月15日",salary:"$200–260k",stage:"最終面接 — 5月8日",interviews:[{type:"人事面接",date:"4月20日",s:"done"},{type:"技術面接 (1)",date:"4月27日",s:"done"},{type:"技術面接 (2)",date:"5月1日",s:"done"},{type:"最終面接",date:"5月8日",s:"upcoming"}],questions:[{text:"冪等性を保証する決済リトライシステムを設計せよ",tags:["システム設計","信頼性"]},{text:"重複しない最長部分文字列を求めよ",tags:["アルゴリズム"]}]},{id:5,company:"Notion",abbr:"NT",role:"Full Stack Engineer",status:"APPLIED",applied:"4月30日",salary:"$150–190k",stage:"返答待ち",interviews:[],questions:[]},{id:6,company:"Figma",abbr:"FG",role:"Software Engineer",status:"REJECTED",applied:"4月1日",salary:"$165–210k",stage:"技術面接後に不採用",interviews:[{type:"人事面接",date:"4月8日",s:"done"},{type:"技術面接",date:"4月15日",s:"done"}],questions:[{text:"WebSocketを使ったコラボレーティブカーソルシステムを実装せよ",tags:["websockets","コラボ"]}]},{id:7,company:"Raycast",abbr:"RC",role:"Software Engineer",status:"APPLIED",applied:"5月1日",salary:"—",stage:"返答待ち",interviews:[],questions:[]},{id:8,company:"PlanetScale",abbr:"PS",role:"Infrastructure Engineer",status:"WITHDRAWN",applied:"3月20日",salary:"$155–195k",stage:"辞退",interviews:[],questions:[]}];
+
+const COLS=[
+  {key:"APPLIED",  label:"応募済",   cls:"col-applied",   ids:[5,7]},
+  {key:"PHONE",    label:"書類通過", cls:"col-phone",     ids:[2]},
+  {key:"TECHNICAL",label:"技術面接", cls:"col-technical", ids:[1]},
+  {key:"ONSITE",   label:"最終面接", cls:"col-onsite",    ids:[4]},
+  {key:"OFFER",    label:"内定",     cls:"col-offer",     ids:[3]},
+  {key:"CLOSED",   label:"終了",     cls:"col-closed",    ids:[6,8]},
+];
+
+const SL={APPLIED:"応募済",PHONE:"書類通過",TECHNICAL:"技術面接",ONSITE:"最終面接",OFFER:"内定",REJECTED:"不採用",WITHDRAWN:"辞退"};
+const SC={APPLIED:"b-applied",PHONE:"b-phone",TECHNICAL:"b-technical",ONSITE:"b-onsite",OFFER:"b-offer",REJECTED:"b-rejected",WITHDRAWN:"b-withdrawn"};
+const badge=s=>`<span class="badge ${SC[s]}"><span class="badge-dot"></span>${SL[s]}</span>`;
+
+let selectedId=null;
+
+function renderBoard(){
+  const board=document.getElementById("board");
+  board.innerHTML=COLS.map(col=>{
+    const apps=DATA.filter(a=>col.ids.includes(a.id));
+    const cards=apps.map(a=>`
+      <div class="k-card${selectedId===a.id?' selected':''}" onclick="openModal(${a.id})">
+        <div class="k-card-top">
+          <div class="k-abbr">${a.abbr}</div>
+          <span class="k-date">${a.applied}</span>
+        </div>
+        <div class="k-company">${a.company}</div>
+        <div class="k-role">${a.role}</div>
+        <div class="k-foot">
+          <span class="k-salary">${a.salary}</span>
+          <div class="int-dots">${a.interviews.map(i=>`<div class="int-dot ${i.s}"></div>`).join('')}</div>
+        </div>
+      </div>`).join('');
+    return`<div class="col ${col.cls}">
+      <div class="col-head">
+        <span class="col-label">${col.label}</span>
+        <span class="col-count">${apps.length}</span>
+      </div>
+      <div class="col-body">${cards||`<div style="font-size:13px;color:var(--text-3);padding:8px 2px">応募なし</div>`}</div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(id){
+  selectedId=id;
+  const a=DATA.find(d=>d.id===id);
+  document.getElementById("m-icon").textContent=a.abbr;
+  document.getElementById("m-company").textContent=a.company;
+  document.getElementById("m-role").textContent=a.role;
+  document.getElementById("m-body").innerHTML=`
+    <div class="m-section">
+      <div class="m-section-title">詳細情報</div>
+      <div class="meta-grid">
+        <div class="meta-item"><span class="meta-key">進捗</span>${badge(a.status)}</div>
+        <div class="meta-item"><span class="meta-key">応募日</span><span class="meta-val">${a.applied}</span></div>
+        <div class="meta-item"><span class="meta-key">給与</span><span class="meta-val">${a.salary}</span></div>
+        <div class="meta-item"><span class="meta-key">フェーズ</span><span class="meta-val" style="font-family:inherit;font-size:13px">${a.stage}</span></div>
+      </div>
+    </div>
+    ${a.interviews.length?`<div class="m-section">
+      <div class="m-section-title">面接履歴 (${a.interviews.length})</div>
+      ${a.interviews.map(i=>`<div class="tl-item"><div class="tl-dot ${i.s}"></div><div><div class="tl-type">${i.type}</div><div class="tl-date">${i.date}</div></div></div>`).join('')}
+    </div>`:''}
+    <div class="m-section">
+      <div class="m-section-title">面接質問 (${a.questions.length})</div>
+      ${a.questions.length?a.questions.map(q=>`<div class="q-item"><div class="q-text">${q.text}</div><div class="q-tags">${q.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`).join(''):`<div style="font-size:14px;color:var(--text-3);padding:4px 0">まだ質問が記録されていません。</div>`}
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+  renderBoard();
+}
+
+function closeModal(){
+  selectedId=null;
+  document.getElementById("overlay").classList.remove("open");
+  renderBoard();
+}
+
+function handleOverlayClick(e){if(e.target===document.getElementById("overlay"))closeModal()}
+function setPage(el){document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));el.classList.add("active")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+renderBoard();
+</script>
+</body>
+</html>
