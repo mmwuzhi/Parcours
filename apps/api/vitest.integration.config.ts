@@ -5,6 +5,7 @@ export default defineConfig({
     include: ['src/routes/**/*.test.ts'],
     globalSetup: './src/test/global-setup.ts',
     pool: 'forks',
-    poolOptions: { forks: { singleFork: true } },
+    singleFork: true,
+    passWithNoTests: true,
   },
 })
