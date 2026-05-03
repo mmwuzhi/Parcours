@@ -5,7 +5,7 @@ Job application tracker and interview question bank. Monorepo with a Next.js fro
 ## Tech Stack
 
 - Monorepo: Turborepo + pnpm workspaces
-- Frontend: Next.js (App Router, RSC), Tailwind CSS, shadcn/ui, TanStack Query v5
+- Frontend: Next.js 16 (App Router), Tailwind CSS v4, TanStack Query v5 (pure client-side — no RSC data fetching; httpOnly cookies can't be forwarded through RSC), hand-written UI components
 - Backend: Hono on Node.js, TypeScript
 - Database: PostgreSQL + Drizzle ORM (migrations in `apps/api/src/db/migrations/`)
 - Cache: Redis (dashboard aggregations + rate limit counters)
@@ -16,7 +16,8 @@ Job application tracker and interview question bank. Monorepo with a Next.js fro
 
 ## Key Paths
 
-- `apps/web/` — Next.js app
+- `apps/web/` — Next.js 16 app
+- `apps/web/src/proxy.ts` — auth guard (Next.js 16 renamed `middleware.ts` → `proxy.ts`; export must be named `proxy`, not `middleware`)
 - `apps/api/` — Hono server, entry at `src/index.ts`
 - `packages/shared/` — Zod schemas, inferred TypeScript types, shared constants
 - `apps/api/src/db/schema.ts` — Drizzle schema (source of truth for data model)
@@ -48,6 +49,8 @@ pnpm dev                          # start all apps in watch mode
 
 # Daily dev
 pnpm dev                          # start all apps in watch mode
+pnpm --filter web dev             # start only the web app (port 3000)
+pnpm --filter web typecheck       # typecheck web app
 pnpm test                         # unit tests across all packages
 pnpm --filter api test:api        # API integration tests
 pnpm test:e2e                     # Playwright E2E (requires running stack)
@@ -59,6 +62,8 @@ docker compose up -d postgres redis  # just the data layer
 ```
 
 > **Note:** `pnpm --filter api build` (tsup) requires Node 22. On Node 25 the esbuild binary is incompatible. Use `pnpm dev` (tsx) for local development; the Docker build uses Node 22 and works correctly.
+
+> **Note:** Next.js 16 renamed `middleware.ts` to `proxy.ts` and the exported function from `middleware()` to `proxy()`. Do not create a `middleware.ts` in `apps/web/src/` — it will be silently ignored.
 
 ## Conventions
 
