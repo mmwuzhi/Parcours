@@ -79,14 +79,14 @@ Frontend JavaScript never touches the tokens. CSRF risk mitigated by SameSite=La
 
 The `POST /api/watchlist/:id/analyze` route streams the response back to the client using Hono's `streamText` helper, then stores the structured result in `watchlist.fit_analysis` (JSONB) once the stream completes.
 
-`fit_analysis` shape stored in DB:
+`fit_analysis` shape stored in DB (camelCase, matches `FitAnalysisSchema` in `packages/shared`):
 ```json
 {
   "provider": "openai",
   "model": "gpt-4o",
-  "skills_match": { "matched": [], "partial": [], "missing": [] },
-  "salary_fit": "good | ok | low | unknown",
-  "overall_score": 85,
+  "skillsMatch": { "matched": [], "partial": [], "missing": [] },
+  "salaryFit": "good | ok | low | unknown",
+  "overallScore": 85,
   "recommendation": "Strong match — apply",
   "concerns": [],
   "highlights": []
