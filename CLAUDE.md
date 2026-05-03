@@ -28,10 +28,11 @@ Job application tracker and interview question bank. Monorepo with a Next.js fro
 
 ```
 users              id, email, password_hash, created_at
-applications       id, user_id, company, role, status, salary_range, jd_url, notes, applied_at, deleted_at
-interviews         id, application_id, type, scheduled_at, outcome, notes
-questions          id, user_id, content, answer, tags[], difficulty, source_company, review_count, next_review_at
-application_questions  application_id, question_id  (join table)
+applications       id, user_id, company, role, status, salary_range, jd_url, jd_text, notes, applied_at, created_at, deleted_at
+interviews         id, application_id, type, scheduled_at, outcome, notes, created_at, deleted_at
+questions          id, user_id, content, answer, tags[], difficulty, source_company, review_count, next_review_at, created_at, deleted_at
+application_questions  application_id, question_id, linked_at  (join table)
+watchlist          id, user_id, company, role, jd_url, jd_text, salary_range, tags[], notes, fit_analysis (jsonb), analyzed_at, created_at, deleted_at
 ```
 
 Application status flow: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER → ACCEPTED` — can move to `REJECTED` or `WITHDRAWN` from any state.
@@ -39,6 +40,13 @@ Application status flow: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER �
 ## Common Commands
 
 ```bash
+# First-time local setup
+docker compose up -d postgres redis
+cp .env.example .env              # then fill in AI_API_KEY and secrets
+pnpm --filter api db:migrate      # apply migrations to local DB
+pnpm dev                          # start all apps in watch mode
+
+# Daily dev
 pnpm dev                          # start all apps in watch mode
 pnpm test                         # unit tests across all packages
 pnpm --filter api test:api        # API integration tests
@@ -50,6 +58,8 @@ docker compose up                 # full stack in Docker
 docker compose up -d postgres redis  # just the data layer
 ```
 
+> **Note:** `pnpm --filter api build` (tsup) requires Node 22. On Node 25 the esbuild binary is incompatible. Use `pnpm dev` (tsx) for local development; the Docker build uses Node 22 and works correctly.
+
 ## Conventions
 
 - All shared request/response shapes live in `packages/shared` as Zod schemas. Never duplicate types between web and api.
@@ -58,6 +68,8 @@ docker compose up -d postgres redis  # just the data layer
 - Soft-delete only — no hard deletes. All tables with user data have a `deleted_at` column.
 - Migrations are generated, never hand-written. Run `db:generate` after schema changes.
 - Rate limiting runs as middleware before auth. Limits are per-IP for public routes, per-user for authenticated routes.
+- AI analysis (watchlist fit analysis) is provider-agnostic via Vercel AI SDK. Provider is selected by `AI_PROVIDER` env var. Supported: `openai`, `anthropic`, `google`, `groq`, `mistral`, `deepseek`. Any OpenAI-compatible endpoint works via `AI_BASE_URL`.
+- **Run `/check` before every `git push`.** Fix all hard stops before pushing; gated fixes require explicit approval.
 
 ## Environment
 
