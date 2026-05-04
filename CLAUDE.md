@@ -67,6 +67,8 @@ docker compose up -d postgres redis  # just the data layer
 
 > **Note:** `packages/shared` must have `"type": "module"` in its `package.json`. Without it, Node.js doesn't treat the package as ESM and tsx's loader can't resolve extensionless imports across the workspace boundary, causing `SyntaxError: does not provide an export named` at API startup.
 
+> **Note:** All imports inside `packages/shared/src/` — both re-exports in `index.ts` and intra-schema imports between schema files — must use extensionless paths (`./application`, not `./application.js` or `./application.ts`). Turbopack does not remap `.js` → `.ts` for workspace source files, so a `.js` extension causes `Module not found` during `next build` even though tsc and tsx both accept it.
+
 > **Note:** Next.js 16 renamed `middleware.ts` to `proxy.ts` and the exported function from `middleware()` to `proxy()`. Do not create a `middleware.ts` in `apps/web/src/` — it will be silently ignored.
 
 ## Conventions
@@ -78,14 +80,20 @@ docker compose up -d postgres redis  # just the data layer
 - Migrations are generated, never hand-written. Run `db:generate` after schema changes.
 - Rate limiting runs as middleware before auth. Limits are per-IP for public routes, per-user for authenticated routes.
 - AI analysis (watchlist fit analysis) is provider-agnostic via Vercel AI SDK. Provider is selected by `AI_PROVIDER` env var. Supported: `openai`, `anthropic`, `google`, `groq`, `mistral`, `deepseek`. Any OpenAI-compatible endpoint works via `AI_BASE_URL`.
-- **Run `/check` before every `git push`.** Four steps, in order:
+- **Run `/check` before every `git push`.** Five steps, in order:
+
   ```
-  pnpm format          # auto-fixes formatting (Prettier) — run first so lint sees clean files
-  pnpm lint            # ESLint — all errors must be fixed before pushing; warnings are acceptable
-  pnpm typecheck       # TypeScript — no errors allowed
-  pnpm test            # unit tests must pass
+  pnpm format                # auto-fixes formatting (Prettier) — run first so lint sees clean files
+  pnpm lint                  # ESLint — all errors must be fixed before pushing; warnings are acceptable
+  pnpm typecheck             # TypeScript — no errors allowed
+  pnpm test                  # unit tests must pass
+  pnpm --filter web build    # Turbopack production build — catches module resolution errors that tsc misses
   ```
+
   These match the CI job matrix exactly. Fix every failure before pushing — "pre-existing" failures still block the push. ESLint errors are not negotiable; a push with lint errors will fail CI.
+
+  > **Why `next build` is required:** `tsc` and `tsx` remap `.js` → `.ts` for relative imports, but Turbopack does not. A `.js` extension on an intra-package import (e.g. `import { X } from "./foo.js"` inside `packages/shared/src/`) will silently pass typecheck but fail the production build.
+
 - **Coding rules are in [`CODING.md`](./CODING.md).** Read it before writing new code. It covers TypeScript, API, and frontend patterns.
 
 ## Environment

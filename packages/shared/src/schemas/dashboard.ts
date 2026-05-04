@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ApplicationStatus } from "./application.js";
+import { ApplicationStatus } from "./application";
 
 export const UpcomingInterviewSchema = z.object({
   id: z.string().uuid(),

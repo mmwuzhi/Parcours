@@ -37,7 +37,7 @@ Rules that apply across the entire monorepo. Read before writing new code.
 ## Shared (`packages/shared`)
 
 - All request/response shapes that are used by more than one package live here as Zod schemas. Never duplicate types between `apps/api` and `apps/web`.
-- Re-exports in `src/index.ts` use extensionless imports (`./schemas/auth`, not `./schemas/auth.ts` or `./schemas/auth.js`). tsx and bundlers both resolve these correctly; explicit extensions cause problems across the ESM/CJS boundary.
+- All imports inside `packages/shared/src/` — re-exports in `index.ts` and imports between schema files — must be extensionless (`./application`, not `./application.js` or `./application.ts`). Turbopack does not remap `.js` → `.ts` for workspace source files; an explicit `.js` extension passes tsc but fails `next build`.
 - Inferred TypeScript types (`z.infer<typeof FooSchema>`) are exported alongside every schema. Consumers import the type, not the schema, when they only need the type.
 
 ## General
