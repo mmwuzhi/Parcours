@@ -63,6 +63,10 @@ docker compose up -d postgres redis  # just the data layer
 
 > **Note:** `pnpm --filter api build` (tsup) requires Node 22. On Node 25 the esbuild binary is incompatible. Use `pnpm dev` (tsx) for local development; the Docker build uses Node 22 and works correctly.
 
+> **Note:** The API dev script uses `node --env-file=../../.env --import tsx/esm --watch src/index.ts` (not `tsx watch`) so that the root `.env` is loaded before env validation runs. The `tsx watch` CLI subcommand does not support `--env-file` in the correct position.
+
+> **Note:** `packages/shared` must have `"type": "module"` in its `package.json`. Without it, Node.js doesn't treat the package as ESM and tsx's loader can't resolve extensionless imports across the workspace boundary, causing `SyntaxError: does not provide an export named` at API startup.
+
 > **Note:** Next.js 16 renamed `middleware.ts` to `proxy.ts` and the exported function from `middleware()` to `proxy()`. Do not create a `middleware.ts` in `apps/web/src/` — it will be silently ignored.
 
 ## Conventions

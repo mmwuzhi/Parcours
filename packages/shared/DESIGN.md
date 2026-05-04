@@ -84,7 +84,7 @@ export const ApplicationStatus = z.enum([
 export type ApplicationStatus = z.infer<typeof ApplicationStatus>
 ```
 
-Valid transitions: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER → ACCEPTED`. `REJECTED` and `WITHDRAWN` are reachable from any state. The API enforces no transition rules at this stage — any status value is accepted on PATCH.
+Valid transitions: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER → ACCEPTED`. `REJECTED` and `WITHDRAWN` are reachable from any state. The transition map is exported as `STATUS_TRANSITIONS` and the API enforces it on every PATCH — invalid transitions return 400.
 
 ## Interview Type Enum
 
@@ -100,18 +100,18 @@ export const InterviewType = z.enum([
 
 ```ts
 export const FitAnalysisSchema = z.object({
-  provider:        z.string(),
-  model:           z.string(),
-  skills_match:    z.object({
-    matched:  z.string().array(),
-    partial:  z.string().array(),
-    missing:  z.string().array(),
+  provider:       z.string(),
+  model:          z.string(),
+  skillsMatch:    z.object({
+    matched: z.string().array(),
+    partial: z.string().array(),
+    missing: z.string().array(),
   }),
-  salary_fit:      z.enum(['good', 'ok', 'low', 'unknown']),
-  overall_score:   z.number().int().min(0).max(100),
-  recommendation:  z.string(),
-  concerns:        z.string().array(),
-  highlights:      z.string().array(),
+  salaryFit:      z.enum(['good', 'ok', 'low', 'unknown']),
+  overallScore:   z.number().int().min(0).max(100),
+  recommendation: z.string(),
+  concerns:       z.string().array(),
+  highlights:     z.string().array(),
 })
 export type FitAnalysis = z.infer<typeof FitAnalysisSchema>
 ```
