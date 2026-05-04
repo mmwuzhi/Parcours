@@ -4,36 +4,33 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, X, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useQuestions, useCreateQuestion } from "@/hooks/use-questions";
+import {
+  useQuestions,
+  useCreateQuestion,
+  useUpdateQuestion,
+  useDeleteQuestion,
+} from "@/hooks/use-questions";
 import type { Question } from "@/lib/types";
 
-const createSchema = z.object({
+const questionSchema = z.object({
   content: z.string().min(1, "Required"),
   answer: z.string().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]),
   sourceCompany: z.string().optional(),
 });
-type CreateForm = z.infer<typeof createSchema>;
+type QuestionForm = z.infer<typeof questionSchema>;
 
 export function QuestionsList() {
   const { data: questions = [], isLoading, isError } = useQuestions();
   const createQ = useCreateQuestion();
-  const [showModal, setShowModal] = useState(false);
+  const updateQ = useUpdateQuestion();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateForm>({
-    resolver: zodResolver(createSchema),
-    defaultValues: { difficulty: "medium" },
-  });
-
-  async function onSubmit(form: CreateForm) {
+  async function handleCreate(form: QuestionForm) {
     try {
       await createQ.mutateAsync({
         ...form,
@@ -41,10 +38,26 @@ export function QuestionsList() {
         sourceCompany: form.sourceCompany || undefined,
       });
       toast.success("Question added");
-      reset();
-      setShowModal(false);
+      setShowAddModal(false);
     } catch {
-      toast.error("Failed to add question");
+      // onError in hook handles toast
+    }
+  }
+
+  async function handleEdit(form: QuestionForm) {
+    if (!editingQuestion) return;
+    try {
+      await updateQ.mutateAsync({
+        id: editingQuestion.id,
+        content: form.content,
+        answer: form.answer || null,
+        difficulty: form.difficulty,
+        sourceCompany: form.sourceCompany || null,
+      });
+      toast.success("Saved");
+      setEditingQuestion(null);
+    } catch {
+      // onError in hook handles toast
     }
   }
 
@@ -75,7 +88,7 @@ export function QuestionsList() {
           </p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowAddModal(true)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -127,86 +140,31 @@ export function QuestionsList() {
             question={q}
             expanded={expanded === q.id}
             onToggle={() => setExpanded(expanded === q.id ? null : q.id)}
+            onEdit={() => setEditingQuestion(q)}
           />
         ))}
       </div>
 
-      {/* Add modal */}
-      {showModal && (
-        <Modal
-          onClose={() => {
-            setShowModal(false);
-            reset();
+      {showAddModal && (
+        <QuestionModal
+          title="Add question"
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleCreate}
+        />
+      )}
+
+      {editingQuestion && (
+        <QuestionModal
+          title="Edit question"
+          defaultValues={{
+            content: editingQuestion.content,
+            answer: editingQuestion.answer ?? "",
+            difficulty: editingQuestion.difficulty,
+            sourceCompany: editingQuestion.sourceCompany ?? "",
           }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
-            Add question
-          </h2>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            style={{ display: "flex", flexDirection: "column", gap: 14 }}
-          >
-            <FormField label="Question *" error={errors.content?.message}>
-              <textarea
-                {...register("content")}
-                placeholder="What is the question?"
-                rows={3}
-                style={{ ...inputStyle, resize: "vertical" }}
-                autoFocus
-              />
-            </FormField>
-            <FormField label="Answer (optional)">
-              <textarea
-                {...register("answer")}
-                placeholder="Your answer or notes…"
-                rows={4}
-                style={{ ...inputStyle, resize: "vertical" }}
-              />
-            </FormField>
-            <div style={{ display: "flex", gap: 12 }}>
-              <FormField label="Difficulty">
-                <select {...register("difficulty")} style={inputStyle}>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </FormField>
-              <FormField label="Source company">
-                <input
-                  {...register("sourceCompany")}
-                  placeholder="Google"
-                  style={inputStyle}
-                />
-              </FormField>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "flex-end",
-                marginTop: 4,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setShowModal(false);
-                  reset();
-                }}
-                style={{
-                  ...btnStyle,
-                  background: "var(--surface-2)",
-                  color: "var(--text)",
-                }}
-              >
-                Cancel
-              </button>
-              <button type="submit" disabled={isSubmitting} style={btnStyle}>
-                {isSubmitting ? "Adding…" : "Add"}
-              </button>
-            </div>
-          </form>
-        </Modal>
+          onClose={() => setEditingQuestion(null)}
+          onSubmit={handleEdit}
+        />
       )}
     </div>
   );
@@ -216,11 +174,16 @@ function QuestionRow({
   question,
   expanded,
   onToggle,
+  onEdit,
 }: {
   question: Question;
   expanded: boolean;
   onToggle: () => void;
+  onEdit: () => void;
 }) {
+  const deleteQ = useDeleteQuestion();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   return (
     <div
       style={{
@@ -230,22 +193,28 @@ function QuestionRow({
         overflow: "hidden",
       }}
     >
-      <button
-        onClick={onToggle}
+      {/* Row header */}
+      <div
         style={{
-          width: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
           padding: "12px 16px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
           gap: 12,
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Clickable content area */}
+        <button
+          onClick={onToggle}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            textAlign: "left",
+            padding: 0,
+          }}
+        >
           <div
             style={{
               fontSize: 14,
@@ -257,7 +226,9 @@ function QuestionRow({
           >
             {question.content}
           </div>
-        </div>
+        </button>
+
+        {/* Right side: badges + actions */}
         <div
           style={{
             display: "flex",
@@ -274,22 +245,63 @@ function QuestionRow({
           <span className={`diff-${question.difficulty}`} style={badgeStyle}>
             {question.difficulty}
           </span>
-          {expanded ? (
-            <ChevronUp size={14} color="var(--text-muted)" />
+
+          {confirmDelete ? (
+            <>
+              <span style={{ fontSize: 12, color: "var(--danger)" }}>
+                Delete?
+              </span>
+              <button
+                onClick={() => deleteQ.mutate(question.id)}
+                style={iconBtnDanger}
+              >
+                Yes
+              </button>
+              <button onClick={() => setConfirmDelete(false)} style={iconBtn}>
+                No
+              </button>
+            </>
           ) : (
-            <ChevronDown size={14} color="var(--text-muted)" />
+            <>
+              <button onClick={onEdit} style={iconBtn} title="Edit">
+                <Pencil size={12} />
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={iconBtn}
+                title="Delete"
+              >
+                <Trash2 size={12} />
+              </button>
+            </>
           )}
+
+          <button
+            onClick={onToggle}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 2,
+              display: "flex",
+            }}
+          >
+            {expanded ? (
+              <ChevronUp size={14} color="var(--text-muted)" />
+            ) : (
+              <ChevronDown size={14} color="var(--text-muted)" />
+            )}
+          </button>
         </div>
-      </button>
+      </div>
 
       {expanded && question.answer && (
         <div
           style={{
-            padding: "0 16px 14px",
+            padding: "12px 16px 14px",
             fontSize: 13,
             color: "var(--text-muted)",
             borderTop: "1px solid var(--border)",
-            paddingTop: 12,
             lineHeight: 1.6,
             whiteSpace: "pre-wrap",
           }}
@@ -315,13 +327,26 @@ function QuestionRow({
   );
 }
 
-function Modal({
+function QuestionModal({
+  title,
+  defaultValues,
   onClose,
-  children,
+  onSubmit,
 }: {
+  title: string;
+  defaultValues?: Partial<QuestionForm>;
   onClose: () => void;
-  children: React.ReactNode;
+  onSubmit: (form: QuestionForm) => Promise<void>;
 }) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<QuestionForm>({
+    resolver: zodResolver(questionSchema),
+    defaultValues: { difficulty: "medium", ...defaultValues },
+  });
+
   return (
     <div
       style={{
@@ -365,7 +390,70 @@ function Modal({
         >
           <X size={16} />
         </button>
-        {children}
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
+          {title}
+        </h2>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+        >
+          <FormField label="Question *" error={errors.content?.message}>
+            <textarea
+              {...register("content")}
+              placeholder="What is the question?"
+              rows={3}
+              style={{ ...inputStyle, resize: "vertical" }}
+              autoFocus
+            />
+          </FormField>
+          <FormField label="Answer (optional)">
+            <textarea
+              {...register("answer")}
+              placeholder="Your answer or notes…"
+              rows={4}
+              style={{ ...inputStyle, resize: "vertical" }}
+            />
+          </FormField>
+          <div style={{ display: "flex", gap: 12 }}>
+            <FormField label="Difficulty">
+              <select {...register("difficulty")} style={inputStyle}>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </FormField>
+            <FormField label="Source company">
+              <input
+                {...register("sourceCompany")}
+                placeholder="Google"
+                style={inputStyle}
+              />
+            </FormField>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              justifyContent: "flex-end",
+              marginTop: 4,
+            }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                ...btnStyle,
+                background: "var(--surface-2)",
+                color: "var(--text)",
+              }}
+            >
+              Cancel
+            </button>
+            <button type="submit" disabled={isSubmitting} style={btnStyle}>
+              {isSubmitting ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -402,6 +490,7 @@ const inputStyle: React.CSSProperties = {
   background: "var(--surface)",
   color: "var(--text)",
   outline: "none",
+  boxSizing: "border-box",
 };
 
 const btnStyle: React.CSSProperties = {
@@ -421,4 +510,22 @@ const badgeStyle: React.CSSProperties = {
   fontWeight: 600,
   padding: "2px 7px",
   borderRadius: 100,
+};
+
+const iconBtn: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  padding: "4px 6px",
+  background: "none",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius-sm)",
+  cursor: "pointer",
+  color: "var(--text-muted)",
+};
+
+const iconBtnDanger: React.CSSProperties = {
+  ...iconBtn,
+  color: "var(--danger)",
+  borderColor: "var(--danger)",
+  fontSize: 12,
 };
