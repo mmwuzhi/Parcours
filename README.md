@@ -4,18 +4,18 @@ Track job applications and build a personal interview question bank. Each applic
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js (App Router), Tailwind CSS, shadcn/ui, TanStack Query v5 |
-| Backend | Hono on Node.js (TypeScript) |
-| Database | PostgreSQL + Drizzle ORM |
-| Cache | Redis |
-| Auth | JWT — 15-min access token, 7-day refresh token |
-| Logging | Pino with trace IDs (API), Sentry (web) |
-| Container | Docker Compose |
-| CI/CD | GitHub Actions |
-| Tests | Vitest (unit), Supertest (API), Playwright (E2E) |
-| Monorepo | Turborepo + pnpm workspaces |
+| Layer     | Technology                                                       |
+| --------- | ---------------------------------------------------------------- |
+| Frontend  | Next.js (App Router), Tailwind CSS, shadcn/ui, TanStack Query v5 |
+| Backend   | Hono on Node.js (TypeScript)                                     |
+| Database  | PostgreSQL + Drizzle ORM                                         |
+| Cache     | Redis                                                            |
+| Auth      | JWT — 15-min access token, 7-day refresh token                   |
+| Logging   | Pino with trace IDs (API), Sentry (web)                          |
+| Container | Docker Compose                                                   |
+| CI/CD     | GitHub Actions                                                   |
+| Tests     | Vitest (unit), Supertest (API), Playwright (E2E)                 |
+| Monorepo  | Turborepo + pnpm workspaces                                      |
 
 ## Project Layout
 

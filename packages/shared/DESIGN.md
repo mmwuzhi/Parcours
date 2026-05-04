@@ -44,34 +44,40 @@ export type Application = z.infer<typeof ApplicationSchema>
 ### In `apps/api` (route definition)
 
 ```ts
-import { CreateApplicationSchema, ApplicationSchema } from '@parcours/shared'
+import { CreateApplicationSchema, ApplicationSchema } from "@parcours/shared";
 
 const route = createRoute({
-  method: 'post',
-  path: '/api/applications',
-  request: { body: { content: { 'application/json': { schema: CreateApplicationSchema } } } },
-  responses: { 201: { content: { 'application/json': { schema: ApplicationSchema } } } },
-})
+  method: "post",
+  path: "/api/applications",
+  request: {
+    body: {
+      content: { "application/json": { schema: CreateApplicationSchema } },
+    },
+  },
+  responses: {
+    201: { content: { "application/json": { schema: ApplicationSchema } } },
+  },
+});
 ```
 
 ### In `apps/web` (form validation)
 
 ```ts
-import { CreateApplicationSchema } from '@parcours/shared'
+import { CreateApplicationSchema } from "@parcours/shared";
 
-const form = useForm({ resolver: zodResolver(CreateApplicationSchema) })
+const form = useForm({ resolver: zodResolver(CreateApplicationSchema) });
 ```
 
 ## Schema Index
 
-| File | Exports |
-|------|---------|
-| `auth.ts` | `RegisterSchema`, `LoginSchema`, `AuthResponseSchema` |
+| File             | Exports                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| `auth.ts`        | `RegisterSchema`, `LoginSchema`, `AuthResponseSchema`                                              |
 | `application.ts` | `CreateApplicationSchema`, `UpdateApplicationSchema`, `ApplicationSchema`, `ApplicationListSchema` |
-| `interview.ts` | `CreateInterviewSchema`, `UpdateInterviewSchema`, `InterviewSchema` |
-| `question.ts` | `CreateQuestionSchema`, `UpdateQuestionSchema`, `QuestionSchema`, `LinkQuestionSchema` |
-| `watchlist.ts` | `CreateWatchlistSchema`, `UpdateWatchlistSchema`, `WatchlistSchema`, `FitAnalysisSchema` |
-| `dashboard.ts` | `DashboardSchema` |
+| `interview.ts`   | `CreateInterviewSchema`, `UpdateInterviewSchema`, `InterviewSchema`                                |
+| `question.ts`    | `CreateQuestionSchema`, `UpdateQuestionSchema`, `QuestionSchema`, `LinkQuestionSchema`             |
+| `watchlist.ts`   | `CreateWatchlistSchema`, `UpdateWatchlistSchema`, `WatchlistSchema`, `FitAnalysisSchema`           |
+| `dashboard.ts`   | `DashboardSchema`                                                                                  |
 
 ## Application Status Enum
 
@@ -79,9 +85,16 @@ Defined once here, used everywhere:
 
 ```ts
 export const ApplicationStatus = z.enum([
-  'APPLIED', 'PHONE', 'TECHNICAL', 'ONSITE', 'OFFER', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'
-])
-export type ApplicationStatus = z.infer<typeof ApplicationStatus>
+  "APPLIED",
+  "PHONE",
+  "TECHNICAL",
+  "ONSITE",
+  "OFFER",
+  "ACCEPTED",
+  "REJECTED",
+  "WITHDRAWN",
+]);
+export type ApplicationStatus = z.infer<typeof ApplicationStatus>;
 ```
 
 Valid transitions: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER → ACCEPTED`. `REJECTED` and `WITHDRAWN` are reachable from any state. The transition map is exported as `STATUS_TRANSITIONS` and the API enforces it on every PATCH — invalid transitions return 400.
@@ -90,8 +103,12 @@ Valid transitions: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER → ACC
 
 ```ts
 export const InterviewType = z.enum([
-  'phone_screen', 'technical', 'behavioral', 'system_design', 'onsite'
-])
+  "phone_screen",
+  "technical",
+  "behavioral",
+  "system_design",
+  "onsite",
+]);
 ```
 
 ## FitAnalysis Shape
@@ -100,20 +117,20 @@ export const InterviewType = z.enum([
 
 ```ts
 export const FitAnalysisSchema = z.object({
-  provider:       z.string(),
-  model:          z.string(),
-  skillsMatch:    z.object({
+  provider: z.string(),
+  model: z.string(),
+  skillsMatch: z.object({
     matched: z.string().array(),
     partial: z.string().array(),
     missing: z.string().array(),
   }),
-  salaryFit:      z.enum(['good', 'ok', 'low', 'unknown']),
-  overallScore:   z.number().int().min(0).max(100),
+  salaryFit: z.enum(["good", "ok", "low", "unknown"]),
+  overallScore: z.number().int().min(0).max(100),
   recommendation: z.string(),
-  concerns:       z.string().array(),
-  highlights:     z.string().array(),
-})
-export type FitAnalysis = z.infer<typeof FitAnalysisSchema>
+  concerns: z.string().array(),
+  highlights: z.string().array(),
+});
+export type FitAnalysis = z.infer<typeof FitAnalysisSchema>;
 ```
 
 ## TODO

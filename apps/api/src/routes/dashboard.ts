@@ -1,107 +1,133 @@
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { db } from '../db/index.js'
-import { applications, interviews } from '../db/schema.js'
-import { eq, and, isNull, sql, count, inArray, notInArray, gte, lte } from 'drizzle-orm'
-import { redis } from '../lib/redis.js'
-import { logger } from '../middleware/request-logger.js'
-import { DashboardSchema } from '@parcours/shared'
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { db } from "../db/index.js";
+import { applications, interviews } from "../db/schema.js";
+import {
+  eq,
+  and,
+  isNull,
+  sql,
+  count,
+  inArray,
+  notInArray,
+  gte,
+  lte,
+} from "drizzle-orm";
+import { redis } from "../lib/redis.js";
+import { logger } from "../middleware/request-logger.js";
+import { DashboardSchema } from "@parcours/shared";
 
-type Variables = { traceId: string; user: { id: string; email: string } }
+type Variables = { traceId: string; user: { id: string; email: string } };
 
-export const dashboardRoutes = new OpenAPIHono<{ Variables: Variables }>()
+export const dashboardRoutes = new OpenAPIHono<{ Variables: Variables }>();
 
-const CACHE_TTL = 60
+const CACHE_TTL = 60;
 
 const dashboardRoute = createRoute({
-  method: 'get',
-  path: '/',
+  method: "get",
+  path: "/",
   responses: {
     200: {
-      content: { 'application/json': { schema: DashboardSchema } },
-      description: 'Dashboard stats',
+      content: { "application/json": { schema: DashboardSchema } },
+      description: "Dashboard stats",
     },
   },
-})
+});
 
 dashboardRoutes.openapi(dashboardRoute, async (c) => {
-  const user = c.get('user')
-  const cacheKey = `dashboard:${user.id}`
+  const user = c.get("user");
+  const cacheKey = `dashboard:${user.id}`;
 
   try {
-    const cached = await redis.get(cacheKey)
+    const cached = await redis.get(cacheKey);
     if (cached) {
-      const parsed = JSON.parse(cached)
-      return c.json(parsed, 200)
+      const parsed = JSON.parse(cached);
+      return c.json(parsed, 200);
     }
   } catch (err) {
-    logger.warn({ err }, 'dashboard cache read error — falling back to live query')
+    logger.warn(
+      { err },
+      "dashboard cache read error — falling back to live query",
+    );
   }
 
-  const data = await computeDashboard(user.id)
+  const data = await computeDashboard(user.id);
 
   try {
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', CACHE_TTL)
+    await redis.set(cacheKey, JSON.stringify(data), "EX", CACHE_TTL);
   } catch (err) {
-    logger.warn({ err }, 'dashboard cache write error')
+    logger.warn({ err }, "dashboard cache write error");
   }
 
-  return c.json(data, 200)
-})
+  return c.json(data, 200);
+});
 
 async function computeDashboard(userId: string) {
-  const ACTIVE_EXCLUDED = ['ACCEPTED', 'REJECTED', 'WITHDRAWN'] as const
-  const OFFER_STATES = ['OFFER', 'ACCEPTED'] as const
-  const RESPONSE_STATES = ['PHONE', 'TECHNICAL', 'ONSITE', 'OFFER', 'ACCEPTED'] as const
+  const ACTIVE_EXCLUDED = ["ACCEPTED", "REJECTED", "WITHDRAWN"] as const;
+  const OFFER_STATES = ["OFFER", "ACCEPTED"] as const;
+  const RESPONSE_STATES = [
+    "PHONE",
+    "TECHNICAL",
+    "ONSITE",
+    "OFFER",
+    "ACCEPTED",
+  ] as const;
 
-  const baseWhere = and(eq(applications.userId, userId), isNull(applications.deletedAt))
+  const baseWhere = and(
+    eq(applications.userId, userId),
+    isNull(applications.deletedAt),
+  );
 
   const [totals] = await db
     .select({ total: count() })
     .from(applications)
-    .where(baseWhere)
+    .where(baseWhere);
 
-  const totalApplied = Number(totals?.total ?? 0)
+  const totalApplied = Number(totals?.total ?? 0);
 
   const [active] = await db
     .select({ total: count() })
     .from(applications)
-    .where(and(baseWhere, notInArray(applications.status, [...ACTIVE_EXCLUDED])))
+    .where(
+      and(baseWhere, notInArray(applications.status, [...ACTIVE_EXCLUDED])),
+    );
 
   const [offers] = await db
     .select({ total: count() })
     .from(applications)
-    .where(and(baseWhere, inArray(applications.status, [...OFFER_STATES])))
+    .where(and(baseWhere, inArray(applications.status, [...OFFER_STATES])));
 
   const statusCounts = await db
     .select({ status: applications.status, cnt: count() })
     .from(applications)
     .where(baseWhere)
-    .groupBy(applications.status)
+    .groupBy(applications.status);
 
-  const byStatus: Record<string, number> = {}
+  const byStatus: Record<string, number> = {};
   for (const row of statusCounts) {
-    byStatus[row.status] = Number(row.cnt)
+    byStatus[row.status] = Number(row.cnt);
   }
 
   const [responseCount] = await db
     .select({ total: count() })
     .from(applications)
-    .where(and(baseWhere, inArray(applications.status, [...RESPONSE_STATES])))
+    .where(and(baseWhere, inArray(applications.status, [...RESPONSE_STATES])));
 
   const responseRate =
-    totalApplied > 0 ? (Number(responseCount?.total ?? 0) / totalApplied) * 100 : 0
+    totalApplied > 0
+      ? (Number(responseCount?.total ?? 0) / totalApplied) * 100
+      : 0;
 
   const [avgRow] = await db
     .select({
       avg: sql<number>`AVG(EXTRACT(EPOCH FROM (now() - ${applications.appliedAt})) / 86400)`,
     })
     .from(applications)
-    .where(and(baseWhere, inArray(applications.status, [...OFFER_STATES])))
+    .where(and(baseWhere, inArray(applications.status, [...OFFER_STATES])));
 
-  const avgDaysToOffer = avgRow?.avg != null ? Number(avgRow.avg) : null
+  const avgDaysToOffer = avgRow?.avg != null ? Number(avgRow.avg) : null;
 
-  const now = new Date()
-  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const now = new Date();
+  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const upcoming = await db
     .select({
@@ -123,7 +149,7 @@ async function computeDashboard(userId: string) {
         lte(interviews.scheduledAt, in7Days),
       ),
     )
-    .orderBy(interviews.scheduledAt)
+    .orderBy(interviews.scheduledAt);
 
   return {
     totalApplied,
@@ -140,5 +166,5 @@ async function computeDashboard(userId: string) {
       type: u.type,
       scheduledAt: u.scheduledAt.toISOString(),
     })),
-  }
+  };
 }

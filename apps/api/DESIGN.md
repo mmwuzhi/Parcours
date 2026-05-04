@@ -60,26 +60,32 @@ apps/api/
 ## Key Decisions
 
 ### 1. `@hono/zod-openapi` schema-first throughout
+
 Every route is defined with `createRoute()`. The OpenAPI spec is auto-generated from route definitions and served via Swagger UI at `/api/docs`. The spec is always in sync with the code — no separate documentation to maintain.
 
 ### 2. Shared Zod schemas in `packages/shared`
+
 Request/response shapes are defined once in `packages/shared` and imported by both `apps/api` (for route definitions) and `apps/web` (for form validation). No type duplication between packages.
 
 ### 3. JWT in httpOnly cookies
+
 - `access_token` cookie: SameSite=Lax, 15-minute TTL
 - `refresh_token` cookie: SameSite=Lax, 7-day TTL, path=/api/auth/refresh only
 
 Frontend JavaScript never touches the tokens. CSRF risk mitigated by SameSite=Lax.
 
 ### 4. `HonoContext` extended with `user`
+
 `authGuard` attaches `{ id, email }` to `c.var.user` after verifying the JWT. Protected route handlers read the user from context — no redundant database queries.
 
 ### 5. Provider-agnostic AI via Vercel AI SDK
+
 `lib/ai.ts` reads `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, and optional `AI_BASE_URL` from env at startup and exports a single `streamAnalysis(prompt)` function. All provider-specific logic is confined to this file. Switching providers requires only changing env vars — no code changes. Supported providers out of the box: `openai`, `anthropic`, `google`, `groq`, `mistral`, `deepseek`. Any OpenAI-compatible endpoint (Ollama, local models) is supported via `AI_BASE_URL`.
 
 The `POST /api/watchlist/:id/analyze` route streams the response back to the client using Hono's `streamText` helper, then stores the structured result in `watchlist.fit_analysis` (JSONB) once the stream completes.
 
 `fit_analysis` shape stored in DB (camelCase, matches `FitAnalysisSchema` in `packages/shared`):
+
 ```json
 {
   "provider": "openai",
@@ -94,86 +100,97 @@ The `POST /api/watchlist/:id/analyze` route streams the response back to the cli
 ```
 
 ### 6. Dashboard is a single flat endpoint
+
 `GET /api/dashboard` returns `{ totalApplied, byStatus, responseRate, avgDaysToOffer, upcomingInterviews }` in one response, Redis-cached for 60 seconds. If Redis is unreachable, falls back to a live Postgres query. This avoids waterfall requests from the frontend.
 
 ### 6. Rate limiter degrades gracefully
+
 If Redis is unreachable, the rate limiter logs a warning and allows the request through. For a personal app, availability beats strict enforcement. The middleware never returns 500 due to a Redis failure.
 
 ### 7. Soft delete everywhere
+
 All tables with user data have a `deleted_at` column. All list queries filter `WHERE deleted_at IS NULL` via a shared `isNotDeleted()` helper. No hard deletes.
 
 ## Routes
 
 ### Auth — `/api/auth`
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | /register | — | Create account, return tokens in cookies |
-| POST | /login | — | Validate credentials, return tokens in cookies |
-| POST | /refresh | refresh cookie | Rotate refresh token, issue new access token |
-| DELETE | /logout | — | Clear both cookies |
+
+| Method | Path      | Auth           | Description                                    |
+| ------ | --------- | -------------- | ---------------------------------------------- |
+| POST   | /register | —              | Create account, return tokens in cookies       |
+| POST   | /login    | —              | Validate credentials, return tokens in cookies |
+| POST   | /refresh  | refresh cookie | Rotate refresh token, issue new access token   |
+| DELETE | /logout   | —              | Clear both cookies                             |
 
 ### Applications — `/api/applications`
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | List (query: `status`, `search`, `page`, `limit`) |
-| POST | / | Create |
-| GET | /:id | Get one |
-| PATCH | /:id | Partial update |
-| DELETE | /:id | Soft delete |
+
+| Method | Path | Description                                       |
+| ------ | ---- | ------------------------------------------------- |
+| GET    | /    | List (query: `status`, `search`, `page`, `limit`) |
+| POST   | /    | Create                                            |
+| GET    | /:id | Get one                                           |
+| PATCH  | /:id | Partial update                                    |
+| DELETE | /:id | Soft delete                                       |
 
 ### Interviews — `/api/applications/:appId/interviews`
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | List interviews for an application |
-| POST | / | Create interview |
-| PATCH | /:id | Update |
-| DELETE | /:id | Soft delete |
+
+| Method | Path | Description                        |
+| ------ | ---- | ---------------------------------- |
+| GET    | /    | List interviews for an application |
+| POST   | /    | Create interview                   |
+| PATCH  | /:id | Update                             |
+| DELETE | /:id | Soft delete                        |
 
 ### Questions — `/api/questions`
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | List user's question bank |
-| POST | / | Create |
-| PATCH | /:id | Update (content, answer, tags, difficulty) |
-| DELETE | /:id | Soft delete |
-| POST | /:id/link | Link question to an application |
+
+| Method | Path      | Description                                |
+| ------ | --------- | ------------------------------------------ |
+| GET    | /         | List user's question bank                  |
+| POST   | /         | Create                                     |
+| PATCH  | /:id      | Update (content, answer, tags, difficulty) |
+| DELETE | /:id      | Soft delete                                |
+| POST   | /:id/link | Link question to an application            |
 
 ### Watchlist — `/api/watchlist`
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | List watchlist items (query: `search`, `tags`) |
-| POST | / | Create (company, role, jd_url, jd_text, salary_range, tags, notes) |
-| PATCH | /:id | Update any field |
-| DELETE | /:id | Soft delete |
-| POST | /:id/analyze | Stream AI fit analysis, store result in `fit_analysis` |
-| POST | /:id/apply | Convert to application record, soft-delete watchlist item |
+
+| Method | Path         | Description                                                        |
+| ------ | ------------ | ------------------------------------------------------------------ |
+| GET    | /            | List watchlist items (query: `search`, `tags`)                     |
+| POST   | /            | Create (company, role, jd_url, jd_text, salary_range, tags, notes) |
+| PATCH  | /:id         | Update any field                                                   |
+| DELETE | /:id         | Soft delete                                                        |
+| POST   | /:id/analyze | Stream AI fit analysis, store result in `fit_analysis`             |
+| POST   | /:id/apply   | Convert to application record, soft-delete watchlist item          |
 
 ### Dashboard — `/api/dashboard`
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | Aggregated stats + upcoming interviews (Redis 60s TTL) |
+
+| Method | Path | Description                                            |
+| ------ | ---- | ------------------------------------------------------ |
+| GET    | /    | Aggregated stats + upcoming interviews (Redis 60s TTL) |
 
 ## Test Plan
 
 ### Unit tests (`src/**/*.test.ts`, Vitest, no DB/Redis required)
 
-| File | Cases |
-|------|-------|
-| `lib/jwt.test.ts` | sign + verify round-trip; expired token returns error; wrong secret returns error |
-| `lib/password.test.ts` | hash produces different output each call; compare succeeds on correct password; compare fails on wrong password |
-| `middleware/trace-id.test.ts` | generates a UUID when no header present; forwards existing X-Trace-Id unchanged |
-| `middleware/auth-guard.test.ts` | valid token attaches user to context; expired token returns 401; missing cookie returns 401; tampered token returns 401 |
-| `middleware/rate-limiter.test.ts` | allows requests under limit; blocks on limit exceeded (429); degrades to allow-all when Redis throws |
+| File                              | Cases                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `lib/jwt.test.ts`                 | sign + verify round-trip; expired token returns error; wrong secret returns error                                       |
+| `lib/password.test.ts`            | hash produces different output each call; compare succeeds on correct password; compare fails on wrong password         |
+| `middleware/trace-id.test.ts`     | generates a UUID when no header present; forwards existing X-Trace-Id unchanged                                         |
+| `middleware/auth-guard.test.ts`   | valid token attaches user to context; expired token returns 401; missing cookie returns 401; tampered token returns 401 |
+| `middleware/rate-limiter.test.ts` | allows requests under limit; blocks on limit exceeded (429); degrades to allow-all when Redis throws                    |
 
 ### API integration tests (`src/routes/**/*.test.ts`, Supertest, requires Postgres + Redis)
 
 **`routes/auth.test.ts`**
+
 - register: happy path returns 200 + sets cookies; duplicate email returns 409; missing fields return 422
 - login: correct credentials return 200 + cookies; wrong password returns 401; unknown email returns 401
 - refresh: valid refresh token issues new access token + rotates refresh cookie; expired refresh token returns 401; missing cookie returns 401
 - logout: clears both cookies; subsequent request with old access token returns 401
 
 **`routes/applications.test.ts`**
+
 - list: returns only the authenticated user's applications; `status` filter works; `search` matches company and role; `deleted_at IS NOT NULL` rows excluded
 - create: valid body returns 201; missing required fields return 422
 - get: own application returns 200; another user's application returns 404 (not 403 — don't leak existence)
@@ -181,16 +198,19 @@ All tables with user data have a `deleted_at` column. All list queries filter `W
 - delete: sets `deleted_at`; deleted app absent from subsequent list
 
 **`routes/interviews.test.ts`**
+
 - create under own application returns 201
 - create under another user's application returns 404
 - update and delete own interview; 404 on other user's
 
 **`routes/questions.test.ts`**
+
 - CRUD happy paths
 - link question to own application returns 200; link to another user's application returns 404
 - deleted question not in list
 
 **`routes/watchlist.test.ts`**
+
 - list: returns only current user's items; search works; deleted items excluded
 - create: valid body returns 201; missing required fields return 422
 - update: partial update works
@@ -200,11 +220,13 @@ All tables with user data have a `deleted_at` column. All list queries filter `W
 - apply: creates application record with status APPLIED; watchlist item soft-deleted; returns new application id
 
 **`lib/ai.test.ts`**
+
 - provider factory creates correct client for each supported provider value
 - unknown provider value throws at startup (not at request time)
 - `AI_BASE_URL` overrides base URL on openai provider
 
 **`routes/dashboard.test.ts`**
+
 - returns correct counts matching seeded data
 - second call within 60s returns cached response (same ETag or identical body)
 - Redis unreachable: falls back to live query, returns 200 (not 500)
@@ -224,3 +246,7 @@ Items intentionally out of scope for the current build. Each needs its own desig
 - [ ] **API versioning strategy** — currently implicit v1; define path (`/api/v2/`) or header versioning before any breaking changes
 - [ ] **Rate limit analytics** — expose current limit state to the frontend so it can show warnings before hitting the wall
 - [ ] **Health / readiness endpoints** — `/api/health` (liveness) and `/api/ready` (Postgres + Redis reachable) for Docker healthchecks
+
+## Integration test status
+
+`src/test/global-setup.ts` exists as a stub (empty `setup`/`teardown` exports). The CI job (`api-test`) runs with Postgres + Redis service containers and `pnpm --filter api test:api`, but no actual test files have been written yet. The test cases are fully specced in the Test Plan section above — they just need to be implemented.
