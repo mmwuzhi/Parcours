@@ -10,8 +10,8 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+async function fetchWithCredentials(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(`${API_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
@@ -19,6 +19,20 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
       ...init?.headers,
     },
   })
+}
+
+export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  let res = await fetchWithCredentials(path, init)
+
+  if (res.status === 401 && path !== '/api/auth/refresh' && typeof window !== 'undefined') {
+    const refreshRes = await fetchWithCredentials('/api/auth/refresh', { method: 'POST' })
+    if (refreshRes.ok) {
+      res = await fetchWithCredentials(path, init)
+    } else {
+      window.location.href = '/login'
+      throw new ApiError(401, 'Session expired')
+    }
+  }
 
   if (!res.ok) {
     if (res.status === 401 && typeof window !== 'undefined') {
