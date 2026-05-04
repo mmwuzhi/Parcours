@@ -78,11 +78,15 @@ docker compose up -d postgres redis  # just the data layer
 - Migrations are generated, never hand-written. Run `db:generate` after schema changes.
 - Rate limiting runs as middleware before auth. Limits are per-IP for public routes, per-user for authenticated routes.
 - AI analysis (watchlist fit analysis) is provider-agnostic via Vercel AI SDK. Provider is selected by `AI_PROVIDER` env var. Supported: `openai`, `anthropic`, `google`, `groq`, `mistral`, `deepseek`. Any OpenAI-compatible endpoint works via `AI_BASE_URL`.
-- **Run `/check` before every `git push`.** The verification step must run all three CI commands in order:
+- **Run `/check` before every `git push`.** Four steps, in order:
   ```
-  pnpm lint && pnpm typecheck && pnpm test
+  pnpm format          # auto-fixes formatting (Prettier) — run first so lint sees clean files
+  pnpm lint            # ESLint — all errors must be fixed before pushing; warnings are acceptable
+  pnpm typecheck       # TypeScript — no errors allowed
+  pnpm test            # unit tests must pass
   ```
-  These match the CI job matrix exactly. Fix every failure before pushing — "pre-existing" failures still block the push.
+  These match the CI job matrix exactly. Fix every failure before pushing — "pre-existing" failures still block the push. ESLint errors are not negotiable; a push with lint errors will fail CI.
+- **Coding rules are in [`CODING.md`](./CODING.md).** Read it before writing new code. It covers TypeScript, API, and frontend patterns.
 
 ## Environment
 

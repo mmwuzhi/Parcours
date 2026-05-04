@@ -61,6 +61,8 @@ apps/web/
       types.ts              local TypeScript types matching actual API response shapes
 ```
 
+> Coding rules for the frontend are in [`CODING.md`](../../CODING.md) at the repo root. The decisions below explain *why* the architecture is the way it is; the coding rules explain *how* to write code within it.
+
 ## Key Decisions
 
 ### 1. Pure client-side data fetching — no RSC fetch
@@ -126,9 +128,9 @@ Items not yet implemented. Token refresh must happen before anything else — th
 
 - [ ] **Question full CRUD** — edit question (content, answer, difficulty, tags), delete question, spaced repetition review queue (questions where `next_review_at <= now`).
 
-- [ ] **Application PATCH + DELETE** — kanban cards currently show status but cannot update it. Drag-to-reorder or a status dropdown on the card should call `PATCH /api/applications/:id`.
+- [ ] **Application PATCH + DELETE** — `useUpdateApplication` and `useDeleteApplication` hooks exist in `src/hooks/use-applications.ts` but no UI calls them yet. Wired up once the detail page exists.
 
-- [ ] **E2E tests** — Playwright suite covering register → create application → update status → add interview flow. Infrastructure is in place (`pnpm test:e2e`); no test files written yet.
+- [x] **E2E test infrastructure** — Playwright config, `@playwright/test` dependency, and 4 auth smoke tests in `e2e/auth.spec.ts` (redirect guard, page renders, register→login flow). Full flow tests (add interview, update status) pending.
 
 - [ ] **Error boundary + toast feedback** — TanStack Query mutation errors currently go unhandled in the UI. Add a global error boundary and a toast system (or inline error messages) so the user knows when a mutation failed.
 
