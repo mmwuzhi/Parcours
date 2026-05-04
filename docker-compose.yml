@@ -36,6 +36,8 @@ services:
     working_dir: /app/apps/api
     command: pnpm run db:migrate
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://parcours:parcours@postgres:5432/parcours
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,6 +49,9 @@ services:
     ports:
       - "4000:4000"
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://parcours:parcours@postgres:5432/parcours
+      REDIS_URL: redis://redis:6379
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -60,6 +65,8 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
+    environment:
+      PORT: "3000"
     depends_on:
       - api
 

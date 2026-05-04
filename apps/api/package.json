@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file=../../.env --import tsx/esm --watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --no-splitting",
-    "start": "node dist/index.js",
+    "build": "tsup",
+    "start": "node apps/api/dist/index.js",
     "test": "vitest run",
     "test:api": "vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc --noEmit",
