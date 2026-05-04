@@ -99,7 +99,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: cp .env.example .env
       - run: docker compose up -d
-      - run: pnpm --filter api db:migrate
       - run: pnpm --filter web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
