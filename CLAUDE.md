@@ -71,6 +71,8 @@ docker compose up -d postgres redis  # just the data layer
 
 > **Note:** Next.js 16 renamed `middleware.ts` to `proxy.ts` and the exported function from `middleware()` to `proxy()`. Do not create a `middleware.ts` in `apps/web/src/` — it will be silently ignored.
 
+> **Note:** The e2e CI job runs `docker compose up -d`, which starts the `migrate` service and applies all migrations before the `api` container starts. Do not add a separate `pnpm --filter api db:migrate` step to that job — `drizzle-kit` reads `DATABASE_URL` from `process.env` and there is no database reachable from the runner at that point.
+
 ## Conventions
 
 - All shared request/response shapes live in `packages/shared` as Zod schemas. Never duplicate types between web and api.
