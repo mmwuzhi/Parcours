@@ -58,8 +58,8 @@ apps/web/
       use-applications.ts   GET /api/applications (list + single) + create/update/delete
       use-dashboard.ts      GET /api/dashboard
       use-interviews.ts     GET/POST/PATCH/DELETE /api/applications/:id/interviews
-      use-questions.ts      GET /api/questions (list + create)
-      use-watchlist.ts      GET /api/watchlist (list + create)
+      use-questions.ts      GET/POST/PATCH/DELETE /api/questions
+      use-watchlist.ts      GET/POST/PATCH/DELETE /api/watchlist + apply + analyze
     lib/
       api.ts                typed apiFetch wrapper
       types.ts              local TypeScript types matching actual API response shapes
@@ -133,9 +133,12 @@ export default [...nextConfig];
 
 - [x] **Toast feedback on mutation errors** — all `useMutation` calls in `use-applications.ts`, `use-interviews.ts`, `use-questions.ts`, and `use-watchlist.ts` have `onError: (err) => toast.error(err.message)`. A global error boundary is still missing.
 
-- [ ] **Watchlist AI streaming analysis** — "Analyze fit" button on each watchlist card calls `POST /api/watchlist/:id/analyze`, reads the SSE stream, and renders `FitAnalysisSchema` (score, skills match, recommendation). TanStack Query is not appropriate here — this needs a plain `fetch` + `ReadableStream`.
+- [x] **Question edit + delete** — inline edit/delete buttons on each question row; delete requires two-step confirmation. Shared `QuestionModal` handles both add and edit via `defaultValues`. Hooks: `useUpdateQuestion` (PATCH), `useDeleteQuestion` (DELETE).
 
-- [ ] **Question full CRUD** — edit question (content, answer, difficulty, tags), delete question, spaced repetition review queue (questions where `next_review_at <= now`).
+- [ ] **Watchlist edit + apply + AI analysis** — three features in `watchlist-list.tsx` + `use-watchlist.ts`:
+  - **Edit**: `useUpdateWatchlist` (PATCH `/api/watchlist/:id`) + edit modal with pre-filled `defaultValues`.
+  - **Apply**: `useApplyWatchlist` (POST `/api/watchlist/:id/apply`) → API creates an Application record (status `APPLIED`), soft-deletes the watchlist item, returns `{ applicationId }` → redirect to `/applications/[applicationId]`.
+  - **Analyze**: plain `fetch` + `ReadableStream` (not `useMutation`) consuming `POST /api/watchlist/:id/analyze`. Stream is raw-JSON-in-progress; show "Analyzing…" spinner until stream ends, then `invalidateQueries(['watchlist'])` to pick up the persisted `fitAnalysis`. Display collapsible `FitAnalysis` card (score, skills matched/partial/missing, salary fit, recommendation). Handle `fitAnalysis: null` after analysis as "Analysis unavailable" — the API may persist `analyzedAt` without a valid `fitAnalysis` if the AI returns non-JSON.
 
 - [ ] **Linked questions panel** on the detail page — blocked until `GET /api/applications/:id/questions` and an unlink endpoint exist on the API side.
 
