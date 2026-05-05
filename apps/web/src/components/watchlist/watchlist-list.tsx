@@ -41,6 +41,7 @@ const itemSchema = z.object({
   company: z.string().min(1, "Required"),
   role: z.string().min(1, "Required"),
   jdUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  jdText: z.string().optional(),
   salaryRange: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -167,6 +168,7 @@ export function WatchlistList() {
             company: editingItem.company,
             role: editingItem.role,
             jdUrl: editingItem.jdUrl ?? "",
+            jdText: editingItem.jdText ?? "",
             salaryRange: editingItem.salaryRange ?? "",
             notes: editingItem.notes ?? "",
           }}
@@ -625,6 +627,7 @@ function ItemModal({
         company: form.company,
         role: form.role,
         jdUrl: form.jdUrl || null,
+        jdText: form.jdText || null,
         salaryRange: form.salaryRange || null,
         notes: form.notes || null,
       });
@@ -669,6 +672,14 @@ function ItemModal({
             {...register("salaryRange")}
             placeholder="e.g. $150k–$200k"
             style={inputStyle}
+          />
+        </FormField>
+        <FormField label="Job description (for AI analysis)">
+          <textarea
+            {...register("jdText")}
+            placeholder="Paste the full job description here…"
+            rows={5}
+            style={{ ...inputStyle, resize: "vertical" }}
           />
         </FormField>
         <FormField label="Notes">

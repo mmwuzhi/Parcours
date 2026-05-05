@@ -68,14 +68,16 @@ export function authed(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return Promise.resolve(app.request(path, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: cookies,
-      ...(init.headers as Record<string, string>),
-    },
-  }));
+  return Promise.resolve(
+    app.request(path, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookies,
+        ...(init.headers as Record<string, string>),
+      },
+    }),
+  );
 }
 
 export async function cleanupUser(email: string): Promise<void> {

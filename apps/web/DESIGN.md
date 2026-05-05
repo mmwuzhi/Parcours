@@ -135,10 +135,11 @@ export default [...nextConfig];
 
 - [x] **Question edit + delete** — inline edit/delete buttons on each question row; delete requires two-step confirmation. Shared `QuestionModal` handles both add and edit via `defaultValues`. Hooks: `useUpdateQuestion` (PATCH), `useDeleteQuestion` (DELETE).
 
-- [ ] **Watchlist edit + apply + AI analysis** — three features in `watchlist-list.tsx` + `use-watchlist.ts`:
-  - **Edit**: `useUpdateWatchlist` (PATCH `/api/watchlist/:id`) + edit modal with pre-filled `defaultValues`.
-  - **Apply**: `useApplyWatchlist` (POST `/api/watchlist/:id/apply`) → API creates an Application record (status `APPLIED`), soft-deletes the watchlist item, returns `{ applicationId }` → redirect to `/applications/[applicationId]`.
-  - **Analyze**: plain `fetch` + `ReadableStream` (not `useMutation`) consuming `POST /api/watchlist/:id/analyze`. Stream is raw-JSON-in-progress; show "Analyzing…" spinner until stream ends, then `invalidateQueries(['watchlist'])` to pick up the persisted `fitAnalysis`. Display collapsible `FitAnalysis` card (score, skills matched/partial/missing, salary fit, recommendation). Handle `fitAnalysis: null` after analysis as "Analysis unavailable" — the API may persist `analyzedAt` without a valid `fitAnalysis` if the AI returns non-JSON.
+- [x] **Watchlist edit + apply + AI analysis** — edit modal with pre-filled fields; apply button (POST /:id/apply → creates application, redirects to detail page); analyze button consumes SSE stream, shows spinner, invalidates cache on completion, renders collapsible FitAnalysis panel (score, skill match, salary fit, highlights, concerns).
+
+- [x] **API integration tests** — Vitest integration suite covering auth (register/login/logout), applications (CRUD + status transitions), interviews (CRUD), questions (CRUD), watchlist (CRUD + apply). Each suite uses an isolated user and cleans up in `afterAll`. `vitest.integration.config.ts` auto-loads `../../.env` if present; CI uses job-level env vars.
+
+- [x] **jdText field** — `UpdateApplicationSchema` now accepts `jdText`; application detail form has a "Job description" textarea. Watchlist edit modal also has a "Job description (for AI analysis)" textarea; `useUpdateWatchlist` passes `jdText` in the PATCH payload.
 
 - [ ] **Linked questions panel** on the detail page — blocked until `GET /api/applications/:id/questions` and an unlink endpoint exist on the API side.
 

@@ -43,6 +43,7 @@ export const UpdateApplicationSchema = z.object({
   role: z.string().min(1).max(200).optional(),
   status: ApplicationStatus.optional(),
   jdUrl: z.string().url().nullable().optional(),
+  jdText: z.string().nullable().optional(),
   salaryRange: z.string().max(100).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   appliedAt: z.string().datetime().optional(),

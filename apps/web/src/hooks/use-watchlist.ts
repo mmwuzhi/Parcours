@@ -44,6 +44,7 @@ export function useUpdateWatchlist() {
       company?: string;
       role?: string;
       jdUrl?: string | null;
+      jdText?: string | null;
       salaryRange?: string | null;
       notes?: string | null;
     }) =>

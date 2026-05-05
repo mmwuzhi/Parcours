@@ -30,6 +30,7 @@ const editSchema = z.object({
   status: z.string(),
   salaryRange: z.string().optional(),
   jdUrl: z.string().optional(),
+  jdText: z.string().optional(),
   notes: z.string().optional(),
 });
 type EditForm = z.infer<typeof editSchema>;
@@ -52,6 +53,7 @@ export function ApplicationDetail({ app }: { app: Application }) {
       status: app.status,
       salaryRange: app.salaryRange ?? "",
       jdUrl: app.jdUrl ?? "",
+      jdText: app.jdText ?? "",
       notes: app.notes ?? "",
     },
   });
@@ -69,6 +71,7 @@ export function ApplicationDetail({ app }: { app: Application }) {
         status: form.status as ApplicationStatus,
         salaryRange: form.salaryRange || null,
         jdUrl: form.jdUrl || null,
+        jdText: form.jdText || null,
         notes: form.notes || null,
       });
       toast.success("Saved");
@@ -133,6 +136,15 @@ export function ApplicationDetail({ app }: { app: Application }) {
             {...register("jdUrl")}
             placeholder="https://…"
             style={inputStyle}
+          />
+        </FormField>
+
+        <FormField label="Job description">
+          <textarea
+            {...register("jdText")}
+            rows={5}
+            placeholder="Paste the job description here…"
+            style={{ ...inputStyle, resize: "vertical" }}
           />
         </FormField>
 
