@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { db } from "../db/index.js";
-import { applications } from "../db/schema.js";
+import { applications, applicationQuestions, questions } from "../db/schema.js";
 import { eq, and, isNull, ilike, or, sql, count } from "drizzle-orm";
 import {
   CreateApplicationSchema,
@@ -244,6 +244,7 @@ applicationRoutes.openapi(updateRoute, async (c) => {
     role: body.role ?? existing.role,
     status: body.status ?? existing.status,
     jdUrl: body.jdUrl !== undefined ? body.jdUrl : existing.jdUrl,
+    jdText: body.jdText !== undefined ? body.jdText : existing.jdText,
     salaryRange:
       body.salaryRange !== undefined ? body.salaryRange : existing.salaryRange,
     notes: body.notes !== undefined ? body.notes : existing.notes,
@@ -300,6 +301,147 @@ applicationRoutes.openapi(deleteRoute, async (c) => {
     .where(eq(applications.id, id));
 
   return c.body(null, 204);
+});
+
+const LinkedQuestionSchema = z.object({
+  id: z.string().uuid(),
+  content: z.string(),
+  answer: z.string().nullable(),
+  tags: z.array(z.string()),
+  difficulty: z.string(),
+  sourceCompany: z.string().nullable(),
+  linkedAt: z.string().nullable(),
+});
+
+const listQuestionsRoute = createRoute({
+  method: "get",
+  path: "/:id/questions",
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.array(LinkedQuestionSchema) },
+      },
+      description: "Questions linked to this application",
+    },
+    404: {
+      content: {
+        "application/json": { schema: z.object({ error: z.string() }) },
+      },
+      description: "Not found",
+    },
+  },
+});
+
+applicationRoutes.openapi(listQuestionsRoute, async (c) => {
+  const user = c.get("user");
+  const { id } = c.req.valid("param");
+
+  const [app] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(
+      and(
+        eq(applications.id, id),
+        eq(applications.userId, user.id),
+        isNull(applications.deletedAt),
+      ),
+    )
+    .limit(1);
+
+  if (!app) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const rows = await db
+    .select({
+      id: questions.id,
+      content: questions.content,
+      answer: questions.answer,
+      tags: questions.tags,
+      difficulty: questions.difficulty,
+      sourceCompany: questions.sourceCompany,
+      linkedAt: applicationQuestions.linkedAt,
+    })
+    .from(applicationQuestions)
+    .innerJoin(questions, eq(applicationQuestions.questionId, questions.id))
+    .where(
+      and(
+        eq(applicationQuestions.applicationId, id),
+        isNull(questions.deletedAt),
+      ),
+    )
+    .orderBy(applicationQuestions.linkedAt);
+
+  return c.json(
+    rows.map((r) => ({
+      ...r,
+      linkedAt: r.linkedAt?.toISOString() ?? null,
+    })),
+    200,
+  );
+});
+
+const unlinkQuestionRoute = createRoute({
+  method: "delete",
+  path: "/:id/questions/:questionId",
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+      questionId: z.string().uuid(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.object({ ok: z.boolean() }) },
+      },
+      description: "Unlinked",
+    },
+    404: {
+      content: {
+        "application/json": { schema: z.object({ error: z.string() }) },
+      },
+      description: "Not found",
+    },
+  },
+});
+
+applicationRoutes.openapi(unlinkQuestionRoute, async (c) => {
+  const user = c.get("user");
+  const { id, questionId } = c.req.valid("param");
+
+  const [app] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(
+      and(
+        eq(applications.id, id),
+        eq(applications.userId, user.id),
+        isNull(applications.deletedAt),
+      ),
+    )
+    .limit(1);
+
+  if (!app) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const result = await db
+    .delete(applicationQuestions)
+    .where(
+      and(
+        eq(applicationQuestions.applicationId, id),
+        eq(applicationQuestions.questionId, questionId),
+      ),
+    )
+    .returning({ questionId: applicationQuestions.questionId });
+
+  if (result.length === 0) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  return c.json({ ok: true as const }, 200);
 });
 
 function toResponse(app: typeof applications.$inferSelect) {

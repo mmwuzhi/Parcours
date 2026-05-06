@@ -138,3 +138,73 @@ describe("DELETE /api/applications/:id", () => {
     expect(check.status).toBe(404);
   });
 });
+
+describe("GET /api/applications/:id/questions", () => {
+  it("returns empty array when no questions linked", async () => {
+    const created = await createApp_({ company: "QLinkedCo" });
+    const res = await authed(
+      app,
+      cookies,
+      `/api/applications/${created.id}/questions`,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+
+  it("returns linked questions after linking", async () => {
+    const created = await createApp_({ company: "QLinkedCo2" });
+
+    const qRes = await authed(app, cookies, "/api/questions", {
+      method: "POST",
+      body: JSON.stringify({ content: "Linked Q", difficulty: "easy" }),
+    });
+    const { id: questionId } = await qRes.json();
+
+    await authed(app, cookies, `/api/questions/${questionId}/link`, {
+      method: "POST",
+      body: JSON.stringify({ applicationId: created.id }),
+    });
+
+    const res = await authed(
+      app,
+      cookies,
+      `/api/applications/${created.id}/questions`,
+    );
+    expect(res.status).toBe(200);
+    const body: { id: string }[] = await res.json();
+    expect(body.some((q) => q.id === questionId)).toBe(true);
+  });
+});
+
+describe("DELETE /api/applications/:id/questions/:questionId", () => {
+  it("unlinks a question", async () => {
+    const created = await createApp_({ company: "UnlinkCo" });
+
+    const qRes = await authed(app, cookies, "/api/questions", {
+      method: "POST",
+      body: JSON.stringify({ content: "To unlink", difficulty: "medium" }),
+    });
+    const { id: questionId } = await qRes.json();
+
+    await authed(app, cookies, `/api/questions/${questionId}/link`, {
+      method: "POST",
+      body: JSON.stringify({ applicationId: created.id }),
+    });
+
+    const del = await authed(
+      app,
+      cookies,
+      `/api/applications/${created.id}/questions/${questionId}`,
+      { method: "DELETE" },
+    );
+    expect(del.status).toBe(200);
+
+    const list = await authed(
+      app,
+      cookies,
+      `/api/applications/${created.id}/questions`,
+    );
+    const body: { id: string }[] = await list.json();
+    expect(body.find((q) => q.id === questionId)).toBeUndefined();
+  });
+});
