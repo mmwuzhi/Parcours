@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useApplication } from "@/hooks/use-applications";
 import { ApplicationDetail } from "@/components/applications/application-detail";
 import { InterviewPanel } from "@/components/applications/interview-panel";
+import { LinkedQuestionsPanel } from "@/components/applications/linked-questions-panel";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -64,6 +65,7 @@ export default function ApplicationDetailPage() {
 
       <ApplicationDetail app={app} />
       <InterviewPanel appId={app.id} />
+      <LinkedQuestionsPanel appId={app.id} />
     </div>
   );
 }

@@ -108,6 +108,16 @@ export interface Question {
   createdAt: string | null;
 }
 
+export interface LinkedQuestion {
+  id: string;
+  content: string;
+  answer: string | null;
+  tags: string[];
+  difficulty: string;
+  sourceCompany: string | null;
+  linkedAt: string | null;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
