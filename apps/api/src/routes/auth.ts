@@ -76,7 +76,7 @@ authRoutes.openapi(registerRoute, async (c) => {
 
     return c.json({ user: { id: user.id, email: user.email } }, 201);
   } catch (err: unknown) {
-    if (isPostgresError(err) && err.code === "23505") {
+    if (pgErrorCode(err) === "23505") {
       return c.json({ error: "Email already in use" }, 409);
     }
     throw err;
@@ -205,6 +205,12 @@ authRoutes.openapi(logoutRoute, (c) => {
   return c.body(null, 204);
 });
 
-function isPostgresError(err: unknown): err is { code: string } {
-  return typeof err === "object" && err !== null && "code" in err;
+function pgErrorCode(err: unknown): string | undefined {
+  if (typeof err !== "object" || err === null) return undefined;
+  if ("code" in err) return (err as { code: string }).code;
+  // DrizzleQueryError wraps the pg error in `cause`
+  const cause = (err as { cause?: unknown }).cause;
+  if (typeof cause === "object" && cause !== null && "code" in cause)
+    return (cause as { code: string }).code;
+  return undefined;
 }

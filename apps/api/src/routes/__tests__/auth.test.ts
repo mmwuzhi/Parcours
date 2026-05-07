@@ -103,18 +103,18 @@ describe("POST /api/auth/login", () => {
   });
 });
 
-describe("POST /api/auth/logout", () => {
+describe("DELETE /api/auth/logout", () => {
   it("clears cookies", async () => {
     const email = uniqueEmail("logout");
     emails.push(email);
     const cookies = await registerAndLogin(app, email);
 
     const res = await app.request("/api/auth/logout", {
-      method: "POST",
+      method: "DELETE",
       headers: { Cookie: cookies },
     });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(204);
     const cleared = res.headers.getSetCookie?.() ?? [];
     const maxAges = cleared.map((c) => c.match(/max-age=(\d+)/i)?.[1]);
     expect(maxAges.some((a) => a === "0")).toBe(true);

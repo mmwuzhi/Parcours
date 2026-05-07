@@ -39,7 +39,7 @@ describe("GET /api/applications", () => {
     const res = await authed(app, cookies, "/api/applications");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.data)).toBe(true);
   });
 
   it("returns 401 without auth", async () => {
@@ -127,12 +127,12 @@ describe("PATCH /api/applications/:id", () => {
 });
 
 describe("DELETE /api/applications/:id", () => {
-  it("soft-deletes and returns 200", async () => {
+  it("soft-deletes and returns 204", async () => {
     const created = await createApp_({ company: "DeleteMe" });
     const res = await authed(app, cookies, `/api/applications/${created.id}`, {
       method: "DELETE",
     });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(204);
 
     const check = await authed(app, cookies, `/api/applications/${created.id}`);
     expect(check.status).toBe(404);

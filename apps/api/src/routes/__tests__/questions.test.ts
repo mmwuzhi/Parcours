@@ -81,7 +81,7 @@ describe("DELETE /api/questions/:id", () => {
     const del = await authed(app, cookies, `/api/questions/${id}`, {
       method: "DELETE",
     });
-    expect(del.status).toBe(200);
+    expect(del.status).toBe(204);
 
     const list = await authed(app, cookies, "/api/questions");
     const questions: { id: string }[] = await list.json();

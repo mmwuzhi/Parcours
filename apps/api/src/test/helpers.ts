@@ -9,8 +9,15 @@ import { questionRoutes } from "../routes/questions.js";
 import { watchlistRoutes } from "../routes/watchlist.js";
 import { dashboardRoutes } from "../routes/dashboard.js";
 import { db } from "../db/index.js";
-import { users } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import {
+  users,
+  applications,
+  applicationQuestions,
+  interviews,
+  questions,
+  watchlist,
+} from "../db/schema.js";
+import { eq, inArray } from "drizzle-orm";
 // Rate limiters intentionally omitted — they're infrastructure, not business logic,
 // and cause 429s when test suites share an IP in CI.
 
@@ -79,7 +86,32 @@ export function authed(
 }
 
 export async function cleanupUser(email: string): Promise<void> {
-  await db.delete(users).where(eq(users.email, email));
+  const found = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  if (!found.length) return;
+  const userId = found[0].id;
+
+  const userApps = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(eq(applications.userId, userId));
+  const appIds = userApps.map((a) => a.id);
+
+  if (appIds.length) {
+    await db
+      .delete(applicationQuestions)
+      .where(inArray(applicationQuestions.applicationId, appIds));
+    await db
+      .delete(interviews)
+      .where(inArray(interviews.applicationId, appIds));
+    await db.delete(applications).where(inArray(applications.id, appIds));
+  }
+  await db.delete(questions).where(eq(questions.userId, userId));
+  await db.delete(watchlist).where(eq(watchlist.userId, userId));
+  await db.delete(users).where(eq(users.id, userId));
 }
 
 let _counter = 0;

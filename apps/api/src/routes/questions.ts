@@ -308,15 +308,21 @@ questionRoutes.openapi(linkRoute, async (c) => {
       .values({ applicationId, questionId: id });
     return c.json({ ok: true as const }, 200);
   } catch (err: unknown) {
-    if (isPostgresError(err) && err.code === "23505") {
+    if (pgErrorCode(err) === "23505") {
       return c.json({ error: "Already linked" }, 409);
     }
     throw err;
   }
 });
 
-function isPostgresError(err: unknown): err is { code: string } {
-  return typeof err === "object" && err !== null && "code" in err;
+function pgErrorCode(err: unknown): string | undefined {
+  if (typeof err !== "object" || err === null) return undefined;
+  if ("code" in err) return (err as { code: string }).code;
+  // DrizzleQueryError wraps the pg error in `cause`
+  const cause = (err as { cause?: unknown }).cause;
+  if (typeof cause === "object" && cause !== null && "code" in cause)
+    return (cause as { code: string }).code;
+  return undefined;
 }
 
 function toResponse(q: typeof questions.$inferSelect) {

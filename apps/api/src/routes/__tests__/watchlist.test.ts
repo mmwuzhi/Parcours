@@ -76,7 +76,7 @@ describe("DELETE /api/watchlist/:id", () => {
     const del = await authed(app, cookies, `/api/watchlist/${id}`, {
       method: "DELETE",
     });
-    expect(del.status).toBe(200);
+    expect(del.status).toBe(204);
 
     const list = await authed(app, cookies, "/api/watchlist");
     const items: { id: string }[] = await list.json();
