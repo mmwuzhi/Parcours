@@ -1,9 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { traceId } from "../middleware/trace-id.js";
-import { publicRateLimiter } from "../middleware/rate-limiter.js";
 import { authGuard } from "../middleware/auth-guard.js";
-import { userRateLimiter } from "../middleware/rate-limiter.js";
 import { authRoutes } from "../routes/auth.js";
 import { applicationRoutes } from "../routes/applications.js";
 import { interviewRoutes } from "../routes/interviews.js";
@@ -13,6 +11,8 @@ import { dashboardRoutes } from "../routes/dashboard.js";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+// Rate limiters intentionally omitted — they're infrastructure, not business logic,
+// and cause 429s when test suites share an IP in CI.
 
 type Variables = { traceId: string; user: { id: string; email: string } };
 
@@ -21,13 +21,11 @@ export function createApp() {
 
   app.use("*", cors({ origin: "http://localhost:3000", credentials: true }));
   app.use("*", traceId);
-  app.use("*", publicRateLimiter);
 
   app.route("/api/auth", authRoutes);
 
   const protected_ = new OpenAPIHono<{ Variables: Variables }>();
   protected_.use("*", authGuard);
-  protected_.use("*", userRateLimiter);
 
   protected_.route("/applications", applicationRoutes);
   protected_.route("/applications", interviewRoutes);
