@@ -24,6 +24,9 @@ Rules that apply across the entire monorepo. Read before writing new code.
 - **Soft delete only.** Set `deleted_at = now()` via Drizzle. Never issue a `DELETE` statement on user data tables.
 - **Status transitions are enforced server-side.** The `STATUS_TRANSITIONS` map from `@parcours/shared` must be checked on every PATCH to `applications`. Invalid transitions return 400.
 - No business logic in middleware. Middleware handles cross-cutting concerns (auth, rate limiting, logging). Route handlers own business logic.
+- **DELETE routes return 204 with no body** (`c.body(null, 204)`). Do not return a JSON body from a delete handler, and do not write tests that expect 200 from a delete.
+- **Paginated list routes return `{ data: T[], total: number }`, not a plain array.** Any GET-all route that accepts `page` and `limit` query params uses this envelope. Tests must assert on `body.data`, not `body` directly.
+- **Extract Postgres error codes with `pgErrorCode(err)`, not `err.code`.** Drizzle 0.45 wraps the native pg error in `err.cause`, so `err.code` is `undefined` on a `DrizzleQueryError`. The `pgErrorCode()` helper defined in `auth.ts` and `questions.ts` walks the cause chain. Copy that function into any new route file that catches constraint violations.
 
 ## Frontend (`apps/web`)
 
@@ -39,6 +42,13 @@ Rules that apply across the entire monorepo. Read before writing new code.
 - All request/response shapes that are used by more than one package live here as Zod schemas. Never duplicate types between `apps/api` and `apps/web`.
 - All imports inside `packages/shared/src/` — re-exports in `index.ts` and imports between schema files — must be extensionless (`./application`, not `./application.js` or `./application.ts`). Turbopack does not remap `.js` → `.ts` for workspace source files; an explicit `.js` extension passes tsc but fails `next build`.
 - Inferred TypeScript types (`z.infer<typeof FooSchema>`) are exported alongside every schema. Consumers import the type, not the schema, when they only need the type.
+
+## Integration tests (`apps/api/src/routes/__tests__`)
+
+- **Match the HTTP method exactly.** Check `createRoute({ method: ... })` in the route file before writing a test. A test that sends `POST` to a `DELETE` route gets a 404 — not a helpful error.
+- **Check the response shape before asserting.** Read the route handler's return statement before writing `expect(body.x).toBe(...)`. A list route that returns `{ data, total }` will fail an `Array.isArray(body)` assertion even though the request succeeded.
+- **`cleanupUser` must cascade-delete.** Soft-delete keeps rows in the database with a non-null `deleted_at`. Because FK constraints are still enforced, `DELETE FROM users WHERE email = ?` will fail if any child rows (applications, interviews, questions, watchlist, application_questions) still exist. The `cleanupUser` helper in `src/test/helpers.ts` already handles this; when adding new tables that reference `users`, update `cleanupUser` to delete from them first.
+- **Rate limiters do not belong in the test app.** The `createApp()` helper in `src/test/helpers.ts` intentionally omits `publicRateLimiter` and `userRateLimiter`. Sequential test suites share an IP ("unknown") and exhaust the rate limit budget before all suites finish. Rate limiting is infrastructure, not business logic; it has no integration tests here.
 
 ## General
 
