@@ -40,25 +40,29 @@ Application status flow: `APPLIED → PHONE → TECHNICAL → ONSITE → OFFER �
 
 ## Common Commands
 
+A `Makefile` wraps the most common multi-step operations. Prefer `make` for
+anything that involves Docker or the DB; use `pnpm` directly for package-level
+tasks.
+
 ```bash
 # First-time local setup
-docker compose up -d postgres redis
-cp .env.example .env              # then fill in AI_API_KEY and secrets
-pnpm --filter api db:migrate      # apply migrations to local DB
-pnpm dev                          # start all apps in watch mode
+make setup                        # copies .env, installs deps, starts Docker, migrates
 
 # Daily dev
-pnpm dev                          # start all apps in watch mode
+make dev                          # starts postgres + redis, then pnpm dev
+make down                         # stops all Docker services
+make migrate                      # apply pending DB migrations
+make db-studio                    # open Drizzle Studio
+make check                        # full pre-push checklist (format + lint + typecheck + test + build)
+
+# Lower-level (when you need a specific package)
 pnpm --filter web dev             # start only the web app (port 3000)
 pnpm --filter web typecheck       # typecheck web app
 pnpm test                         # unit tests across all packages
 pnpm --filter api test:api        # API integration tests
 pnpm test:e2e                     # Playwright E2E (requires running stack)
 pnpm --filter api db:generate     # generate Drizzle migration from schema changes
-pnpm --filter api db:migrate      # apply pending migrations
-pnpm --filter api db:studio       # open Drizzle Studio
-docker compose up                 # full stack in Docker
-docker compose up -d postgres redis  # just the data layer
+docker compose up                 # full stack in Docker (prod images)
 ```
 
 > **Note:** `pnpm --filter api build` (tsup) requires Node 22. On Node 25 the esbuild binary is incompatible. Use `pnpm dev` (tsx) for local development; the Docker build uses Node 22 and works correctly.
