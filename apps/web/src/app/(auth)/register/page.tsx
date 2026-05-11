@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
@@ -33,7 +34,11 @@ export default function RegisterPage() {
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        toast.error("Email already in use");
+        setError("root", { message: "Email already in use." });
+      } else if (err instanceof ApiError && err.status === 429) {
+        setError("root", {
+          message: "Too many attempts. Please wait a minute and try again.",
+        });
       } else {
         toast.error("Something went wrong");
       }
@@ -66,6 +71,10 @@ export default function RegisterPage() {
               style={styles.input}
             />
           </Field>
+
+          {errors.root && (
+            <p style={styles.errorBanner}>{errors.root.message}</p>
+          )}
 
           <button type="submit" disabled={isSubmitting} style={styles.button}>
             {isSubmitting ? "Creating account…" : "Create account"}
@@ -178,5 +187,13 @@ const styles = {
     color: "var(--primary)",
     textDecoration: "none",
     fontWeight: 500,
+  },
+  errorBanner: {
+    fontSize: 13,
+    color: "var(--danger)",
+    padding: "8px 12px",
+    background: "color-mix(in srgb, var(--danger) 10%, transparent)",
+    borderRadius: "var(--radius-sm)",
+    margin: 0,
   },
 } as const;

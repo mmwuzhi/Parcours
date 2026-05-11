@@ -1,5 +1,10 @@
 .PHONY: dev setup migrate db-studio down logs check
 
+# Load .env into Make variables and export them to all shell commands.
+# drizzle-kit reads DATABASE_URL from process.env and doesn't auto-load .env.
+-include .env
+export
+
 # Start the full dev environment (data layer + apps)
 dev:
 	docker compose up -d postgres redis
@@ -36,4 +41,4 @@ check:
 	pnpm lint
 	pnpm typecheck
 	pnpm test
-	pnpm --filter web build
+	NODE_ENV=production pnpm --filter web build

@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { redis } from "../lib/redis.js";
 import { logger } from "./request-logger.js";
 
@@ -17,17 +18,25 @@ async function slidingWindow(
   pipeline.pexpire(key, windowMs);
 
   const results = await pipeline.exec();
-  if (!results) return true;
-
-  const count = results[2]?.[1] as number;
+  const count = results?.[2]?.[1];
+  if (typeof count !== "number") return true;
   return count <= limit;
 }
 
+function getClientIp(c: Parameters<MiddlewareHandler>[0]): string {
+  const forwarded = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+  if (forwarded) return forwarded;
+  const realIp = c.req.header("x-real-ip");
+  if (realIp) return realIp;
+  try {
+    return getConnInfo(c).remote.address ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 export const publicRateLimiter: MiddlewareHandler = async (c, next) => {
-  const ip =
-    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
-    c.req.header("x-real-ip") ??
-    "unknown";
+  const ip = getClientIp(c);
 
   try {
     const allowed = await slidingWindow(`rl:ip:${ip}`, 60, 60_000);

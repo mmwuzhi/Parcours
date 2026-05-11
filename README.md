@@ -1,21 +1,21 @@
-# Parcours — 歩み
+# Parcours
 
 Track job applications and build a personal interview question bank. Each application links to its interviews, and each interview links to the questions you encountered. Before a new interview at a similar company, pull up what you ran into last time.
 
 ## Stack
 
-| Layer     | Technology                                                       |
-| --------- | ---------------------------------------------------------------- |
-| Frontend  | Next.js (App Router), Tailwind CSS, shadcn/ui, TanStack Query v5 |
-| Backend   | Hono on Node.js (TypeScript)                                     |
-| Database  | PostgreSQL + Drizzle ORM                                         |
-| Cache     | Redis                                                            |
-| Auth      | JWT — 15-min access token, 7-day refresh token                   |
-| Logging   | Pino with trace IDs (API), Sentry (web)                          |
-| Container | Docker Compose                                                   |
-| CI/CD     | GitHub Actions                                                   |
-| Tests     | Vitest (unit), Supertest (API), Playwright (E2E)                 |
-| Monorepo  | Turborepo + pnpm workspaces                                      |
+| Layer     | Technology                                            |
+| --------- | ----------------------------------------------------- |
+| Frontend  | Next.js (App Router), Tailwind CSS, TanStack Query v5 |
+| Backend   | Hono on Node.js (TypeScript)                          |
+| Database  | PostgreSQL + Drizzle ORM                              |
+| Cache     | Redis                                                 |
+| Auth      | JWT — 15-min access token, 7-day refresh token        |
+| Logging   | Pino with trace IDs (API), Sentry (web)               |
+| Container | Docker Compose                                        |
+| CI/CD     | GitHub Actions                                        |
+| Tests     | Vitest (unit), Supertest (API), Playwright (E2E)      |
+| Monorepo  | Turborepo + pnpm workspaces                           |
 
 ## Project Layout
 
@@ -27,40 +27,46 @@ packages/
   shared/     Zod schemas and TypeScript types shared between web and api
 docker/
   postgres/   Init scripts
-  redis/      Config
 .github/
   workflows/  CI pipeline
 ```
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 22
 - pnpm 9+
 - Docker and Docker Compose
 
 ## Local Setup
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Copy env template
-cp .env.example .env
-# Fill in values before continuing
-
-# Start Postgres and Redis
-docker compose up -d postgres redis
-
-# Run database migrations
-pnpm --filter api db:migrate
-
-# Start all services in watch mode
-pnpm dev
+make setup   # copies .env, installs deps, starts Docker, runs migrations
+make dev     # starts postgres + redis, then all services in watch mode
 ```
 
 Web: `http://localhost:3000`
 API: `http://localhost:4000`
 Swagger UI: `http://localhost:4000/docs`
+
+Copy `.env.example` to `.env` and fill in values before running `make setup`.
+
+## Common Commands
+
+```bash
+make dev          # start postgres + redis, then run all services
+make migrate      # apply pending DB migrations
+make db-studio    # open Drizzle Studio
+make down         # stop all Docker services
+make check        # format + lint + typecheck + test + build (run before pushing)
+```
+
+For package-level tasks:
+
+```bash
+pnpm --filter api db:generate   # generate migration from schema changes
+pnpm --filter api test:api      # API integration tests
+pnpm test:e2e                   # E2E tests (requires running stack)
+```
 
 ## Full Stack via Docker
 
@@ -68,35 +74,17 @@ Swagger UI: `http://localhost:4000/docs`
 docker compose up
 ```
 
-Builds and starts web, api, postgres, and redis together.
+Builds and starts web, api, postgres, and redis together. Migrations run automatically before the API container starts.
 
 ## Tests
 
 ```bash
-# Unit tests (all packages)
-pnpm test
-
-# API integration tests
-pnpm --filter api test:api
-
-# E2E tests — requires a running stack
-pnpm test:e2e
+pnpm test                    # unit tests (all packages)
+pnpm --filter api test:api   # API integration tests
+pnpm test:e2e                # E2E tests — requires a running stack
 ```
 
 All three tiers run in CI on every push to `main` and on every pull request.
-
-## Database Migrations
-
-```bash
-# Generate migration from schema changes
-pnpm --filter api db:generate
-
-# Apply pending migrations
-pnpm --filter api db:migrate
-
-# Open Drizzle Studio
-pnpm --filter api db:studio
-```
 
 ## Environment Variables
 

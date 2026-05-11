@@ -22,7 +22,8 @@ const app = new OpenAPIHono<{ Variables: Variables }>();
 app.use("*", cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use("*", traceId);
 app.use("*", requestLogger);
-app.use("*", publicRateLimiter);
+app.use("/api/auth/login", publicRateLimiter);
+app.use("/api/auth/register", publicRateLimiter);
 
 app.route("/api/auth", authRoutes);
 

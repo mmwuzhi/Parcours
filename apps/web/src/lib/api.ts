@@ -33,6 +33,8 @@ export async function apiFetch<T>(
   if (
     res.status === 401 &&
     path !== "/api/auth/refresh" &&
+    path !== "/api/auth/login" &&
+    path !== "/api/auth/register" &&
     typeof window !== "undefined"
   ) {
     const refreshRes = await fetchWithCredentials("/api/auth/refresh", {
@@ -47,7 +49,12 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== "undefined") {
+    if (
+      res.status === 401 &&
+      path !== "/api/auth/login" &&
+      path !== "/api/auth/register" &&
+      typeof window !== "undefined"
+    ) {
       window.location.href = "/login";
     }
     const body = await res.json().catch(() => ({}));
