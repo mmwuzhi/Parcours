@@ -249,4 +249,6 @@ Items intentionally out of scope for the current build. Each needs its own desig
 
 ## Integration test status
 
-`src/test/global-setup.ts` exists as a stub (empty `setup`/`teardown` exports). The CI job (`api-test`) runs with Postgres + Redis service containers and `pnpm --filter api test:api`, but no actual test files have been written yet. The test cases are fully specced in the Test Plan section above — they just need to be implemented.
+All 5 test suites implemented and passing (35 tests). Run with `pnpm --filter api test:api` (requires Postgres + Redis).
+
+Intentionally excluded: `watchlist/analyze` — requires a live AI provider key, unsuitable for CI without a mock.

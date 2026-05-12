@@ -141,6 +141,6 @@ export default [...nextConfig];
 
 - [x] **jdText field** — `UpdateApplicationSchema` now accepts `jdText`; application detail form has a "Job description" textarea. Watchlist edit modal also has a "Job description (for AI analysis)" textarea; `useUpdateWatchlist` passes `jdText` in the PATCH payload.
 
-- [ ] **Linked questions panel** on the detail page — blocked until `GET /api/applications/:id/questions` and an unlink endpoint exist on the API side.
+- [x] **Linked questions panel** on the detail page — `GET /:id/questions` and `DELETE /:id/questions/:questionId` in `applications.ts`; `POST /questions/:id/link` in `questions.ts`. Component rendered in `/applications/[id]`.
 
 - [ ] **Pagination** — list endpoints support `page` + `limit` but the UI always fetches page 1. Add controls after the detail page stabilises.
