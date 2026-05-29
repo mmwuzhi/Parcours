@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
 import {
   useApplications,
@@ -37,7 +38,12 @@ type CreateForm = z.infer<typeof createSchema>;
 
 export function KanbanBoard() {
   const router = useRouter();
-  const { data, isLoading, isError } = useApplications({ limit: 200 });
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const { data, isLoading, isError } = useApplications({
+    limit: 200,
+    search: debouncedSearch || undefined,
+  });
   const createApp = useCreateApplication();
   const [showModal, setShowModal] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -84,13 +90,13 @@ export function KanbanBoard() {
 
   return (
     <div style={{ padding: "24px 28px", height: "100%" }}>
-      {/* Header */}
+      {/* Header row 1: title + add button */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 24,
+          marginBottom: 12,
         }}
       >
         <div>
@@ -127,6 +133,51 @@ export function KanbanBoard() {
           <Plus size={14} />
           Add application
         </button>
+      </div>
+
+      {/* Header row 2: search */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "7px 10px",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-sm)",
+          background: "var(--surface)",
+          marginBottom: 20,
+          maxWidth: 320,
+        }}
+      >
+        <Search size={13} color="var(--text-muted)" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by company or role…"
+          style={{
+            flex: 1,
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontSize: 13,
+            color: "var(--text)",
+          }}
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            style={{
+              display: "flex",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-muted)",
+              padding: 0,
+            }}
+          >
+            <X size={12} />
+          </button>
+        )}
       </div>
 
       {/* Active columns */}
